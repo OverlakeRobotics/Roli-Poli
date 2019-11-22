@@ -5,12 +5,15 @@ import android.util.Log;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DigitalChannelController;
 
 
 @TeleOp (name="test")
 public class TeleopTestDrive extends OpMode {
     private DigitalChannel digitalChannel1;
     private DigitalChannel digitalChannel2;
+    //TODO: Figure out difference between DigitalController and not
+    private DigitalChannelController controller1;
 
     @Override
     public void init() {
