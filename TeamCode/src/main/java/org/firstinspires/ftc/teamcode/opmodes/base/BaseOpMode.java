@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.components.ArmSystem;
 import org.firstinspires.ftc.teamcode.components.DriveSystem;
 import org.firstinspires.ftc.teamcode.components.IMUSystem;
 import org.firstinspires.ftc.teamcode.components.LatchSystem;
+import org.firstinspires.ftc.teamcode.components.LightSystem;
 import org.firstinspires.ftc.teamcode.components.SpinnySystem;
 import org.firstinspires.ftc.teamcode.components.Vuforia;
 import org.firstinspires.ftc.teamcode.components.Vuforia.CameraChoice;
@@ -23,6 +24,7 @@ public abstract class BaseOpMode extends OpMode {
 
     protected DriveSystem driveSystem;
     protected LatchSystem latchSystem;
+    protected LightSystem lightSystem;
     protected SpinnySystem spinnySystem;
     protected Vuforia vuforia;
     protected VuforiaTrackable skystone;
@@ -41,6 +43,8 @@ public abstract class BaseOpMode extends OpMode {
         driveSystem = new DriveSystem(driveMap, hardwareMap.get(BNO055IMU.class, "imu"));
 
         latchSystem = new LatchSystem(hardwareMap.get(Servo.class, "latch"));
+
+        lightSystem = new LightSystem(hardwareMap.get(DigitalChannel.class, "right_light"), hardwareMap.get(DigitalChannel.class, "left_light"));
 
         EnumMap<SpinnySystem.MotorNames, DcMotor> spinnyMap = new EnumMap<>(SpinnySystem.MotorNames.class);
         for(SpinnySystem.MotorNames name : SpinnySystem.MotorNames.values()){
