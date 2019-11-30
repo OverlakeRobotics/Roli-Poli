@@ -12,7 +12,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.teamcode.components.DriveSystem;
 import org.firstinspires.ftc.teamcode.components.LightSystem;
-import org.firstinspires.ftc.teamcode.components.IntakeSystem;
 import org.firstinspires.ftc.teamcode.components.Vuforia.CameraChoice;
 import org.firstinspires.ftc.teamcode.opmodes.base.BaseOpMode;
 
@@ -217,7 +216,7 @@ public abstract class BaseStateMachine extends BaseOpMode {
                         break;
                     }
                 }
-                driveSystem.drive(0.0f, 0.0f, -0.2f, false);
+                driveSystem.drive(0.0f, 0.0f, -0.2f);
                 break;
 
             case STATE_DEPOSIT_STONE:
