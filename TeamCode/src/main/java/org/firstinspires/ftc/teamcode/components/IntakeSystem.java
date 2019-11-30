@@ -2,19 +2,24 @@ package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
+
 import java.util.EnumMap;
 
 public class IntakeSystem {
 
     public enum MotorNames {
-        RIGHT_INTAKE, LEFT_INTAKE, BOTTOM_INTAKE
+        RIGHT_INTAKE, LEFT_INTAKE
     }
 
     private EnumMap<IntakeSystem.MotorNames, DcMotor> motors;
 
-    public IntakeSystem(EnumMap<IntakeSystem.MotorNames, DcMotor> motors) {
+    private Servo bottomServo;
+
+    public IntakeSystem(EnumMap<IntakeSystem.MotorNames, DcMotor> motors, Servo servo) {
         this.motors = motors;
         initMotors();
+        this.bottomServo = servo;
     }
 
     private void initMotors() {

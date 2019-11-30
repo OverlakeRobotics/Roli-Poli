@@ -69,16 +69,15 @@ public class DriveSystem {
             motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             switch(name) {
                 case FRONTLEFT:
-                case BACKLEFT:
                     motor.setDirection(DcMotorSimple.Direction.REVERSE);
                     break;
                 case FRONTRIGHT:
                 case BACKRIGHT:
+                case BACKLEFT:
                     motor.setDirection(DcMotorSimple.Direction.FORWARD);
                     break;
             }
         });
-
         setMotorPower(0);
     }
 

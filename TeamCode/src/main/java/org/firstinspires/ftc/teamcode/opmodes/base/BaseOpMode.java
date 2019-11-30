@@ -50,7 +50,7 @@ public abstract class BaseOpMode extends OpMode {
         for(IntakeSystem.MotorNames name : IntakeSystem.MotorNames.values()){
             intakeMap.put(name,hardwareMap.get(DcMotor.class, name.toString()));
         }
-        intakeSystem = new IntakeSystem(intakeMap);
+        intakeSystem = new IntakeSystem(intakeMap, hardwareMap.get(Servo.class, "BOTTOM_INTAKE"));
 
         DistanceSensor distanceSensor2;
         DistanceSensor distanceSensor3;
