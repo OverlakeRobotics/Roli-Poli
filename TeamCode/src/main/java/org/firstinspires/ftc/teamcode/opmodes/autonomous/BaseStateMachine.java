@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opmodes.autonomous;
 import android.util.Log;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -10,6 +11,7 @@ import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.teamcode.components.DriveSystem;
+import org.firstinspires.ftc.teamcode.components.LightSystem;
 import org.firstinspires.ftc.teamcode.components.Vuforia.CameraChoice;
 import org.firstinspires.ftc.teamcode.opmodes.base.BaseOpMode;
 
@@ -55,6 +57,9 @@ public abstract class BaseStateMachine extends BaseOpMode {
             super.setCamera(CameraChoice.WEBCAM2);
         }
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+        lightSystem = new LightSystem(hardwareMap.get(DigitalChannel.class, "right_light"),
+                                      hardwareMap.get(DigitalChannel.class, "left_light"));
+        lightSystem.off();
         this.msStuckDetectLoop = 30000;
         newState(State.STATE_INITIAL);
         skystone = vuforia.targetsSkyStone.get(0);
@@ -87,9 +92,11 @@ public abstract class BaseStateMachine extends BaseOpMode {
                 // Strafe towards line
                 // Identify SkyStone
                 telemetry.addData("State", "STATE_FIND_SKYSTONE");
+                lightSystem.on();
                 if (mStateTime.seconds() > 2) {
                     // TODO: Unable to detect stone after 2 seconds. Use dead reckoning
                     // TODO: Make new state for this. Currently just set to log
+                    lightSystem.off();
                     newState(State.GRAB_STONE_DEAD_RECKONING);
                     break;
                 }
@@ -110,6 +117,7 @@ public abstract class BaseStateMachine extends BaseOpMode {
                 if (vuforia.isTargetVisible(skystone)) {
                     Log.d(TAG, "inside grab stone loop");
                     VectorF translation = vuforia.getRobotPosition();
+                    lightSystem.off();
                     // Strafe to align with skystone
                     while (!driveSystem.driveToPosition((int) translation.get(1), DriveSystem.Direction.FORWARD, 0.5) && !isStopRequested()) {}
 
