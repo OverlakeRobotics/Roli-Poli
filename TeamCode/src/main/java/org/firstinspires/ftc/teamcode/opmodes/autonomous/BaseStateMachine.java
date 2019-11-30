@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.opmodes.autonomous;
 import android.util.Log;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -11,7 +10,6 @@ import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.teamcode.components.DriveSystem;
-import org.firstinspires.ftc.teamcode.components.LightSystem;
 import org.firstinspires.ftc.teamcode.components.Vuforia.CameraChoice;
 import org.firstinspires.ftc.teamcode.opmodes.base.BaseOpMode;
 
@@ -43,6 +41,8 @@ public abstract class BaseStateMachine extends BaseOpMode {
     private Team currentTeam;
     VuforiaTrackable skystone;
 
+    private DriveSystem.Direction direction;
+
     public void init(Team team) {
         super.init();
         this.msStuckDetectInit = 15000;
@@ -57,16 +57,12 @@ public abstract class BaseStateMachine extends BaseOpMode {
             super.setCamera(CameraChoice.WEBCAM2);
         }
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
-        lightSystem = new LightSystem(hardwareMap.get(DigitalChannel.class, "right_light"),
-                                      hardwareMap.get(DigitalChannel.class, "left_light"));
         lightSystem.off();
         this.msStuckDetectLoop = 30000;
         newState(State.STATE_INITIAL);
         skystone = vuforia.targetsSkyStone.get(0);
         currentTeam = team;
     }
-
-    private DriveSystem.Direction direction;
     @Override
     public void loop() {
         switch (mCurrentState) {
