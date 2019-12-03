@@ -20,6 +20,7 @@ public class IntakeSystem {
         this.motors = motors;
         initMotors();
         this.bottomServo = servo;
+        this.bottomServo.setPosition(0.5);
     }
 
     private void initMotors() {
@@ -36,14 +37,17 @@ public class IntakeSystem {
 
     public void stop() {
         setMotorPowers(0.0);
+        bottomServo.setPosition(0.5);
     }
 
     public void suck() {
         setMotorPowers(1.0);
+        bottomServo.setPosition(0.0);
     }
 
     public void unsuck() {
         setMotorPowers(-1.0);
+        bottomServo.setPosition(1.0);
     }
 
     private void setMotorPowers(double power) {

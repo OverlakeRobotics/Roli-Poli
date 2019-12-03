@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class LatchSystem {
     private Servo servoLeft;
     private Servo servoRight;
+    public boolean latched;
     private final double LEFT_DOWN_POSITION = 0.714623491755917;
     private final double RIGHT_DOWN_POSITION = 0.18877972287358707;
     private final double LEFT_UP_POSITION = 0.4461410963209186;
@@ -21,11 +22,13 @@ public class LatchSystem {
         unlatch();
     }
 
-    public void run(boolean up, boolean down) {
-        if (up) {
+    public void toggle() {
+        if (latched) {
             unlatch();
-        } else if (down) {
+            latched = false;
+        } else {
             latch();
+            latched = true;
         }
     }
 
