@@ -13,10 +13,11 @@ import java.util.EnumMap;
 @TeleOp(name = "Real Teleop", group="TeleOp")
 public class DriveTeleop extends BaseOpMode {
 
-    private boolean xRecentlyHit = false;
+    private boolean leftLatchHit = false;
+    private boolean rightLatchHit = false;
     
     public void loop(){
-        float rx = (float) Math.pow(gamepad1.right_stick_x, 5);
+        float rx = (float) Math.pow(gamepad1.right_stick_x, 3);
         float lx = (float) Math.pow(gamepad1.left_stick_x, 3);
         float ly = (float) Math.pow(gamepad1.left_stick_y, 3);
         driveSystem.slowDrive(gamepad1.left_trigger > 0.3f);
@@ -31,16 +32,24 @@ public class DriveTeleop extends BaseOpMode {
             intakeSystem.stop();
         }
 
-
-        if(gamepad1.x && !xRecentlyHit){
-            xRecentlyHit = true;
-            latchSystem.toggle();
-        } else if (!gamepad1.x){
-            xRecentlyHit = false;
+        if (gamepad1.x && !leftLatchHit) {
+            leftLatchHit = true;
+            latchSystem.toggleLeft();
+        } else if (!gamepad1.x) {
+            leftLatchHit = false;
         }
-        String armReturn = armSystem.run(gamepad2.b, gamepad2.dpad_left, gamepad2.dpad_right, gamepad2.dpad_up,
-                gamepad2.dpad_down, gamepad2.right_bumper, gamepad2.left_bumper, gamepad2.a,
-                true,1, 0.005, true);
-        telemetry.addData("", armReturn);
+
+        if (gamepad1.b && !rightLatchHit) {
+            rightLatchHit = true;
+            latchSystem.toggleRight();
+        } else if (!gamepad1.b) {
+            rightLatchHit = false;
+        }
+
+
+//        String armReturn = armSystem.run(gamepad2.b, gamepad2.dpad_left, gamepad2.dpad_right, gamepad2.dpad_up,
+//                gamepad2.dpad_down, gamepad2.right_bumper, gamepad2.left_bumper, gamepad2.a,
+//                true,1, 0.005, true);
+//        telemetry.addData("", armReturn);
     }
 }
