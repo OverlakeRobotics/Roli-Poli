@@ -2,10 +2,15 @@ package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.Servo;
 
+import java.util.EnumMap;
+
 
 public class LatchSystem {
-    private Servo leftServo;
-    private Servo rightServo;
+
+    public enum ServoNames {
+        LEFT_SERVO, RIGHT_SERVO
+    }
+    private EnumMap<ServoNames, Servo> latchMap;
     public boolean rightLatched;
     public boolean leftLatched;
     private final double LEFT_DOWN_POSITION = 0.714623491755917;
@@ -13,9 +18,8 @@ public class LatchSystem {
     private final double LEFT_UP_POSITION = 0.4461410963209186;
     private final double RIGHT_UP_POSITION = 0.45632352852029817;
 
-    public LatchSystem(Servo left, Servo right) {
-        this.leftServo = left;
-        this.rightServo = right;
+    public LatchSystem(EnumMap<ServoNames, Servo> map) {
+        latchMap = map;
         initServo();
     }
 
@@ -35,10 +39,10 @@ public class LatchSystem {
         }
     }
 
-    public void latchLeft() {
+    public void latch(ServoNames name) {
         leftLatched = true;
-        leftServo.setPosition(LEFT_DOWN_POSITION);
-        leftServo.close();
+        latchMap.get(name).setPosition(LEFT_DOWN_POSITION);
+        latchMap.get(name).close();
     }
 
     public void unlatchLeft() {
