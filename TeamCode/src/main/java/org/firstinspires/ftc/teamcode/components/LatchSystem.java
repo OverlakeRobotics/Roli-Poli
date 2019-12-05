@@ -63,4 +63,18 @@ public class LatchSystem {
             servoName.setLatched(true);
         }
     }
+
+    public void bothUp() {
+        latches.forEach((name, servo) -> {
+            servo.setPosition(name.upPosition());
+            name.latched = false;
+        });
+    }
+
+    public void bothDown() {
+        latches.forEach((name, servo) -> {
+            servo.setPosition(name.downPosition());
+            name.latched = true;
+        });
+    }
 }
