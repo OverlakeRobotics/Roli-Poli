@@ -7,8 +7,33 @@ import java.util.EnumMap;
 
 public class LatchSystem {
 
-    public enum ServoNames {
-        LEFT_SERVO, RIGHT_SERVO
+    public enum Latch {
+        LEFT (0.715, 0.446),
+        RIGHT (0.189, 0.456);
+
+        private final double upPosition;
+        private final double downPosition;
+
+        Latch(double downPosition, double upPosition) {
+            this.downPosition = downPosition;
+            this.upPosition = upPosition;
+        }
+
+        private double upPosition() {
+            return upPosition;
+        }
+
+        private double downPosition() {
+            return downPosition;
+        }
+    }
+
+    public EnumMap<Latch, Servo> latches;
+
+    private void initServo() {
+        latches.forEach((name, servo) -> {
+            servo.setPosition(name.upPosition());
+        });
     }
     private EnumMap<ServoNames, Servo> latchMap;
     public boolean rightLatched;
