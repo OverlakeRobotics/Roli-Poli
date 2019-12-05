@@ -43,8 +43,9 @@ public abstract class BaseOpMode extends OpMode {
         driveSystem = new DriveSystem(driveMap, hardwareMap.get(BNO055IMU.class, "imu"));
 
         EnumMap<LatchSystem.Latch, Servo> latchMap = new EnumMap<>(LatchSystem.Latch.class);
-        latchMap.put(LatchSystem.Latch.LEFT, hardwareMap.get(Servo.class, "latchLeft"));
-        latchMap.put(LatchSystem.Latch.RIGHT, hardwareMap.get(Servo.class, "latchRight"));
+        for(LatchSystem.Latch name : LatchSystem.Latch.values()){
+            latchMap.put(name,hardwareMap.get(Servo.class, name.toString()));
+        }
         latchSystem = new LatchSystem(latchMap);
 
         lightSystem = new LightSystem(hardwareMap.get(DigitalChannel.class, "right_light"), hardwareMap.get(DigitalChannel.class, "left_light"));
