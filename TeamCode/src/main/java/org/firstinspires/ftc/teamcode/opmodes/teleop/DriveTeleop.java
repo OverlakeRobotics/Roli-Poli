@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.components.ArmSystem;
+import org.firstinspires.ftc.teamcode.components.LatchSystem;
 import org.firstinspires.ftc.teamcode.opmodes.base.BaseOpMode;
 
 import java.util.EnumMap;
@@ -24,9 +25,9 @@ public class DriveTeleop extends BaseOpMode {
         driveSystem.drive(rx, lx, ly);
 
 
-        if (gamepad1.right_bumper) {
+        if (gamepad1.left_bumper) {
             intakeSystem.suck();
-        } else if (gamepad1.left_bumper) {
+        } else if (gamepad1.right_bumper) {
             intakeSystem.unsuck();
         } else {
             intakeSystem.stop();
@@ -34,14 +35,14 @@ public class DriveTeleop extends BaseOpMode {
 
         if (gamepad1.x && !leftLatchHit) {
             leftLatchHit = true;
-            latchSystem.toggleLeft();
+            latchSystem.toggle(LatchSystem.Latch.LEFT);
         } else if (!gamepad1.x) {
             leftLatchHit = false;
         }
 
-        if (gamepad1.b && !rightLatchHit) {
+        if (gamepad1.y && !rightLatchHit) {
             rightLatchHit = true;
-            latchSystem.toggleRight();
+            latchSystem.toggle(LatchSystem.Latch.RIGHT);
         } else if (!gamepad1.b) {
             rightLatchHit = false;
         }
