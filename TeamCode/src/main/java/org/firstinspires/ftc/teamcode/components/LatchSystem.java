@@ -8,7 +8,6 @@ import java.util.EnumMap;
 public class LatchSystem {
 
     public enum Latch {
-        // i don't think I'm allowed to but a boolean thing here but who knows!
         LEFT (0.715, 0.446, false),
         RIGHT (0.189, 0.456, false);
 
@@ -45,7 +44,6 @@ public class LatchSystem {
     private void initServo() {
         latches.forEach((name, servo) -> {
             servo.setPosition(name.upPosition());
-            name.latched = false;
         });
     }
 
