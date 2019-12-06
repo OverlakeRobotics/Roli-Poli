@@ -2,47 +2,77 @@ package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.Servo;
 
+import java.util.EnumMap;
+
 
 public class LatchSystem {
-    private Servo servoLeft;
-    private Servo servoRight;
-    public boolean latched;
-    private final double LEFT_DOWN_POSITION = 0.714623491755917;
-    private final double RIGHT_DOWN_POSITION = 0.18877972287358707;
-    private final double LEFT_UP_POSITION = 0.4461410963209186;
-    private final double RIGHT_UP_POSITION = 0.45632352852029817;
 
-    public LatchSystem(Servo left, Servo right) {
-        this.servoLeft = left;
-        this.servoRight = right;
-        initServo();
-    }
+    public enum Latch {
+        LEFT (0.715, 0.446, false),
+        RIGHT (0.189, 0.456, false);
 
-    private void initServo() {
-        unlatch();
-    }
+        private final double upPosition;
+        private final double downPosition;
+        private boolean latched;
 
-    public void toggle() {
-        if (latched) {
-            unlatch();
-            latched = false;
-        } else {
-            latch();
-            latched = true;
+        Latch(double downPosition, double upPosition, boolean latched) {
+            this.downPosition = downPosition;
+            this.upPosition = upPosition;
+            this.latched = latched;
+        }
+
+        private double upPosition() {
+            return upPosition;
+        }
+
+        private double downPosition() {
+            return downPosition;
+        }
+
+        private boolean getLatched() {
+            return latched;
+        }
+
+        private void setLatched(boolean isLatched) {
+            latched = isLatched;
         }
     }
 
-    public void latch() {
-        servoLeft.setPosition(LEFT_DOWN_POSITION);
-        servoLeft.close();
-        servoRight.setPosition(RIGHT_DOWN_POSITION);
-        servoRight.close();
+    public EnumMap<Latch, Servo> latches;
+
+
+    private void initServo() {
+        latches.forEach((name, servo) -> {
+            servo.setPosition(name.upPosition());
+        });
     }
 
-    public void unlatch() {
-        servoLeft.setPosition(LEFT_UP_POSITION);
-        servoLeft.close();
-        servoRight.setPosition(RIGHT_UP_POSITION);
-        servoRight.close();
+    public LatchSystem(EnumMap<Latch, Servo> map) {
+        latches = map;
+        initServo();
+    }
+
+    public void toggle(Latch servoName) {
+        if(servoName.getLatched()) {
+            latches.get(servoName).setPosition(servoName.upPosition());
+            servoName.setLatched(false);
+        } else {
+            latches.get(servoName).setPosition(servoName.downPosition());
+            servoName.setLatched(true);
+        }
+    }
+
+    public void bothUp() {
+        latches.forEach((name, servo) -> {
+            servo.setPosition(name.upPosition());
+            name.latched = false;
+        });
+    }
+
+    public void bothDown() {
+        latches.forEach((name, servo) -> {
+            servo.setPosition(name.downPosition());
+            name.latched = true;
+        });
     }
 }
