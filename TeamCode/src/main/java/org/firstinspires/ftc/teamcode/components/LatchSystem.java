@@ -54,25 +54,32 @@ public class LatchSystem {
 
     public void toggle(Latch servoName) {
         if(servoName.getLatched()) {
-            latches.get(servoName).setPosition(servoName.upPosition());
-            servoName.setLatched(false);
+            up(servoName);
         } else {
-            latches.get(servoName).setPosition(servoName.downPosition());
-            servoName.setLatched(true);
+            down(servoName);
         }
     }
 
     public void bothUp() {
         latches.forEach((name, servo) -> {
-            servo.setPosition(name.upPosition());
-            name.latched = false;
+            up(name);
         });
     }
 
     public void bothDown() {
         latches.forEach((name, servo) -> {
-            servo.setPosition(name.downPosition());
-            name.latched = true;
+            down(name);
         });
     }
+
+    private void up(Latch servoName) {
+        latches.get(servoName).setPosition(servoName.upPosition());
+        servoName.setLatched(false);
+    }
+
+    private void down(Latch servoName) {
+        latches.get(servoName).setPosition(servoName.downPosition());
+        servoName.setLatched(true);
+    }
+
 }
