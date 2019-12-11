@@ -41,13 +41,13 @@ public class IntakeSystem {
     }
 
     public void suck() {
-        setMotorPowers(1.0);
-        bottomServo.setPosition(0.0);
+        setMotorPowers(-1.0);
+        bottomServo.setPosition(1.0);
     }
 
     public void unsuck() {
-        setMotorPowers(-1.0);
-        bottomServo.setPosition(1.0);
+        setMotorPowers(1.0);
+        bottomServo.setPosition(0.0);
     }
 
     private void setMotorPowers(double power) {

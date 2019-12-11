@@ -1,73 +1,73 @@
 package org.firstinspires.ftc.teamcode.opmodes.autonomous;
 
 import android.util.Log;
-
-import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.teamcode.components.DriveSystem;
-import org.firstinspires.ftc.teamcode.components.Vuforia.CameraChoice;
-import org.firstinspires.ftc.teamcode.opmodes.base.BaseOpMode;
 
-public abstract class BaseStateMachine extends BaseOpMode {
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class BaseStateMachine extends BaseAutonomous {
     public enum State {
         STATE_INITIAL,
         STATE_FIND_SKYSTONE,
-        STATE_DELIVER_STONE,
-        STATE_GRAB_STONE,
+        STATE_BACKUP_SLIGHTLY_FROM_WALL,
+        STATE_ALIGN_SKYSTONE,
+        STATE_ROTATE_ARM,
+        STATE_ROTATE_ARM_FOR_HOME,
+        STATE_HORIZONTAL_ALIGN_SKYSTONE,
+        STATE_INTAKE_SKYSTONE,
+        STATE_ALIGN_STONE,
+        STATE_HORIZONTAL_ALIGN_STONE,
+        STATE_INTAKE_STONE,
+        STATE_ALIGN_BRIDGE,
+        STATE_MOVE_PAST_LINE,
+        STATE_TURN_FOR_FOUNDATION,
+        STATE_BACKUP_INTO_FOUNDATION,
+        STATE_INITIAL_ALIGN_STONE,
+        STATE_STRAFE_AWAY_FROM_FOUNDATION,
+        STATE_MOVE_INTO_WALL,
+        STATE_RAISE_ARM_FOR_HOME,
+        STATE_ALIGN_FOR_BRIDGE,
         STATE_FIND_STONE,
-        STATE_PARK_AT_LINE,
+        STATE_APPROACH_STONE,
+        STATE_COMPLETE,
         STATE_DEPOSIT_STONE,
-        STATE_DRAG_FOUNDATION,
-        STATE_RETURN,
-        GRAB_STONE_DEAD_RECKONING,
-        EJECT_STONE,
-        LOGGING
-    }
-
-    public enum Team {
-        RED, BLUE
+        STATE_BACKUP_TO_LINE,
+        STATE_TURN_FOR_BACKUP,
+        STATE_RAISE_ARM,
+        STATE_BACKUP_FOR_SECOND_STONE,
+        STATE_MOVE_PAST_COLOR_LINE,
+        LOGGING,
+        STATE_REALIGN_HEADING,
+        STATE_PARK_AT_LINE,
     }
 
     private final static String TAG = "BaseStateMachine";
-    private ColorSensor colorSensor;
-    protected State mCurrentState;    // Current State Machine State.
-    protected ElapsedTime mStateTime = new ElapsedTime();  // Time into current state
-    protected DistanceSensor distanceSide;
-    private Team currentTeam;
-    VuforiaTrackable skystone;
-
-    private DriveSystem.Direction direction;
+    private State mCurrentState;                         // Current State Machine State.
+    private ElapsedTime mStateTime = new ElapsedTime();  // Time into current state
 
     public void init(Team team) {
-        super.init();
+        super.init(team);
         this.msStuckDetectInit = 15000;
         this.msStuckDetectInitLoop = 15000;
-        // TODO: Get webcam choice for competition
-//        rearPerimeter = vuforia.targetsSkyStone.get(team == Team.RED ? 12 : 11);
-        if (currentTeam == Team.RED) {
-            distanceSide = hardwareMap.get(DistanceSensor.class, "FRONTRIGHTLIDAR");
-            super.setCamera(CameraChoice.WEBCAM1);
-        } else {
-            distanceSide = hardwareMap.get(DistanceSensor.class, "FRONTLEFTLIDAR");
-            super.setCamera(CameraChoice.WEBCAM2);
-        }
-        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
-        lightSystem.off();
-        this.msStuckDetectLoop = 30000;
         newState(State.STATE_INITIAL);
-        skystone = vuforia.targetsSkyStone.get(0);
-        currentTeam = team;
     }
+
+    private int skystoneOffset;
+    private static final int DEAD_RECKON_SKYSTONE = -95;
+    private double alignStone;
+    private boolean calledSpit = false;
     @Override
     public void loop() {
+        telemetry.addData("State", mCurrentState);
+        telemetry.update();
         switch (mCurrentState) {
             case LOGGING:
-                telemetry.addData("DistanceFront", distanceSide.getDistance(DistanceUnit.INCH));
+                // telemetry.addData("DistanceFront", distanceCenter.getDistance(DistanceUnit.MM));
                 telemetry.addData("Color Blue", colorSensor.blue());
                 telemetry.addData("Color Red", colorSensor.red());
                 telemetry.addData("Color Green", colorSensor.green());
@@ -78,165 +78,300 @@ public abstract class BaseStateMachine extends BaseOpMode {
             case STATE_INITIAL:
                 // Initialize
                 // Drive 0.5m (1 tile) to the left
-                direction = currentTeam == Team.RED ? DriveSystem.Direction.RIGHT : DriveSystem.Direction.LEFT;
-                while (!driveSystem.driveToPosition(400, direction, 0.8) && !isStopRequested()) {}
                 newState(State.STATE_FIND_SKYSTONE);
-                mStateTime.reset();
                 break;
 
             case STATE_FIND_SKYSTONE:
-                // Strafe towards line
-                // Identify SkyStone
-                telemetry.addData("State", "STATE_FIND_SKYSTONE");
-                lightSystem.on();
-                if (mStateTime.seconds() > 2) {
-                    // TODO: Unable to detect stone after 2 seconds. Use dead reckoning
-                    // TODO: Make new state for this. Currently just set to log
-                    lightSystem.off();
-                    newState(State.GRAB_STONE_DEAD_RECKONING);
-                    break;
-                }
-                Log.d(TAG, mCurrentState.toString());
-                if (vuforia.isTargetVisible(skystone)) {
-                    Log.d(TAG, "Got here");
-                    newState(State.STATE_GRAB_STONE);
-                    break;
-                }
-                telemetry.update();
-                break;
-            case STATE_GRAB_STONE:
-                Log.d(TAG, mCurrentState.toString());
-                // Grab the stone and slurp it into the machine
-                telemetry.addData("State", "STATE_GRAB_STONE");
-                telemetry.update();
-
-                if (vuforia.isTargetVisible(skystone)) {
-                    Log.d(TAG, "inside grab stone loop");
-                    VectorF translation = vuforia.getRobotPosition();
-                    lightSystem.off();
-                    // Strafe to align with skystone
-                    while (!driveSystem.driveToPosition((int) translation.get(1), DriveSystem.Direction.FORWARD, 0.5) && !isStopRequested()) {}
-
-                    // Drive up to the skystone
-                    double distance = distanceSide.getDistance(DistanceUnit.MM);
-                    distance -= 10;
-                    direction = currentTeam == Team.RED ? DriveSystem.Direction.RIGHT : DriveSystem.Direction.LEFT;
-                    while (!driveSystem.driveToPosition((int) distance, direction, 0.8) && !isStopRequested()) {};
-                    // Offset from skystone
-                    while (!driveSystem.driveToPosition(700, DriveSystem.Direction.FORWARD, 0.5) && !isStopRequested()) {}
-                    // Shove into the other stones
-                    direction = currentTeam == Team.RED ? DriveSystem.Direction.RIGHT : DriveSystem.Direction.LEFT;
-                    while (!driveSystem.driveToPosition(1525, direction, 0.5) && !isStopRequested()) {}
-                    // Drive into skystone
-                    while (!driveSystem.driveToPosition(500, DriveSystem.Direction.BACKWARD, 0.3) && !isStopRequested()) {
-                        intakeSystem.suck();
+                List<Recognition> recognitions = tensorflow.getInference();
+                List<Integer> distances = new ArrayList<Integer>();
+                if (recognitions != null) {
+                    for (Recognition recognition : recognitions) {
+                        if (recognition.getLabel().equals("Skystone")) {
+                            double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
+                            int sign = (int) Math.signum(degrees);
+                            int currOffset = sign * (int) (300 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
+                            currOffset -= 350;
+                            // The skystone detected is one of the first three which means that
+                            // the second skystone must be farthest from the audience
+                            distances.add(currOffset);
+                        }
                     }
-                    intakeSystem.stop();
-                    // Move away with skystone (prepare for next state)
-                    direction = currentTeam == Team.RED ? DriveSystem.Direction.LEFT : DriveSystem.Direction.RIGHT;
-                    while (!driveSystem.driveToPosition(1200, direction, 0.8) && !isStopRequested()) {};
-                    double heading = driveSystem.imuSystem.getHeading();
-                    // I think it is getting stuck here. The purpose is to align the robot with the
-                    // audience such it moves straight
-                    while (!driveSystem.turn(-heading + 190, 0.9) && !isStopRequested()) {};
-                    telemetry.update();
-                    newState(State.STATE_DELIVER_STONE);
-                }
-
-                telemetry.update();
-                newState(State.STATE_DELIVER_STONE);
-                break;
-            case GRAB_STONE_DEAD_RECKONING:
-                telemetry.addData("State", "GRAB_STONE_DEAD_RECKONING");
-
-                // Drive up to the skystone
-                double distance = distanceSide.getDistance(DistanceUnit.MM);
-                distance -= 10;
-                direction = currentTeam == Team.RED ? DriveSystem.Direction.RIGHT : DriveSystem.Direction.LEFT;
-                while (!driveSystem.driveToPosition((int) distance, direction, 0.8) && !isStopRequested()) {};
-                // Offset from skystone
-                while (!driveSystem.driveToPosition(700, DriveSystem.Direction.FORWARD, 0.5) && !isStopRequested()) {}
-                // Shove into the other stones
-                direction = currentTeam == Team.RED ? DriveSystem.Direction.RIGHT : DriveSystem.Direction.LEFT;
-                while (!driveSystem.driveToPosition(1525, direction, 0.5) && !isStopRequested()) {}
-                // Drive into skystone
-                while (!driveSystem.driveToPosition(500, DriveSystem.Direction.BACKWARD, 0.3) && !isStopRequested()) {
-                    intakeSystem.suck();
-                }
-                intakeSystem.stop();
-                // Move away with skystone (prepare for next state)
-                direction = currentTeam == Team.RED ? DriveSystem.Direction.LEFT : DriveSystem.Direction.RIGHT;
-                while (!driveSystem.driveToPosition(1200, direction, 0.8) && !isStopRequested()) {};
-                double heading = driveSystem.imuSystem.getHeading();
-                // I think it is getting stuck here. The purpose is to align the robot with the
-                // audience such it moves straight
-                while (!driveSystem.turn(-heading + 190, 0.9) && !isStopRequested()) {};
-                telemetry.update();
-                newState(State.STATE_DELIVER_STONE);
-                break;
-
-            case STATE_DELIVER_STONE:
-                telemetry.addData("State", "STATE_DELIVER_STONE");
-                while (!driveSystem.driveToPosition(2200, DriveSystem.Direction.BACKWARD, 1.0)  && !isStopRequested()) {};
-                intakeSystem.unsuck();
-                newState(State.EJECT_STONE);
-                telemetry.update();
-                break;
-
-            case EJECT_STONE:
-                if (mStateTime.milliseconds() >= 1000) {
-                    intakeSystem.stop();
-                    newState(State.STATE_PARK_AT_LINE);
+                    // Set max to minimum value
+                    int maxDistance = Integer.MIN_VALUE;
+                    for (int value : distances) {
+                        maxDistance = Math.max(maxDistance, value);
+                    }
+                    // Set the skystoneOffset to be the maximum value
+                    skystoneOffset = maxDistance;
+                    // If the magnitude of the distance is greater than -360 the skystone is the
+                    // first one
+                    if (skystoneOffset < -360) {
+                        skystoneOffset = DEAD_RECKON_SKYSTONE;
+                    }
                 } else {
+                    skystoneOffset = DEAD_RECKON_SKYSTONE;
+                }
+                // Blue strafing is worse so increase the value slightly
+                if (currentTeam == Team.BLUE) {
+                    skystoneOffset *= 1.1;
+                }
+                newState(State.STATE_ALIGN_SKYSTONE);
+                Log.d(TAG, "Skystone offset: " + skystoneOffset);
+                Log.d(TAG, "Distances: " + distances.toString());
+                break;
+
+            case STATE_ALIGN_SKYSTONE:
+                // Align to prepare intake
+                if (driveSystem.driveToPosition(skystoneOffset, DriveSystem.Direction.FORWARD, 0.75)) {
+                    armSystem.setSliderHeight(0.4);
+                    newState(State.STATE_HORIZONTAL_ALIGN_SKYSTONE);
+                }
+                break;
+
+            case STATE_HORIZONTAL_ALIGN_SKYSTONE:
+                armSystem.raise(1.0);
+                if (currentTeam == Team.BLUE) {
+                    if (driveSystem.driveToPosition(1100, centerDirection, 0.7)) {
+                        newState(State.STATE_INTAKE_SKYSTONE);
+                    }
+                } else {
+                    if (driveSystem.driveToPosition(1000, centerDirection, 0.7)) {
+                        newState(State.STATE_INTAKE_SKYSTONE);
+                    }
+                }
+                break;
+
+            case STATE_INTAKE_SKYSTONE:
+                armSystem.raise(1.0);
+                intakeSystem.suck();
+                if (driveSystem.driveToPosition(200, DriveSystem.Direction.FORWARD, 0.2)) {
+                    newState(State.STATE_ALIGN_BRIDGE);
+                }
+                break;
+
+            case STATE_ALIGN_BRIDGE:
+                armSystem.raise(1.0);
+                intakeSystem.suck();
+                if (driveSystem.driveToPosition(625, outsideDirection, 1.0)) {
+                    armSystem.setSliderHeight(0.0);
+                    newState(State.STATE_REALIGN_HEADING);
+                }
+                break;
+
+            case STATE_REALIGN_HEADING:
+                armSystem.raise(1.0);
+                intakeSystem.suck();
+                if (driveSystem.turnAbsolute(0, 1.0)) {
                     intakeSystem.stop();
+                    armSystem.closeGripper();
+                    newState(State.STATE_MOVE_PAST_LINE);
+                }
+                break;
+
+            case STATE_MOVE_PAST_LINE:
+                if (driveSystem.driveToPosition(1600 - skystoneOffset, DriveSystem.Direction.FORWARD, 1.0)) {
+                    newState(State.STATE_TURN_FOR_FOUNDATION);
+                }
+                break;
+
+            case STATE_TURN_FOR_FOUNDATION:
+                int sign = currentTeam == Team.RED ? 1 : -1;
+                if (driveSystem.turnAbsolute(90 * sign, 1.0)) {
+                    newState(State.STATE_BACKUP_INTO_FOUNDATION);
+                }
+                break;
+
+            case STATE_BACKUP_INTO_FOUNDATION:
+                if (driveSystem.driveToPosition(225, DriveSystem.Direction.BACKWARD, 0.75)) {
+                    latchSystem.bothDown();
+                    armSystem.setSliderHeight(2.0);
+                    newState(State.STATE_RAISE_ARM);
+                }
+                break;
+
+            case STATE_RAISE_ARM:
+                armSystem.raise(1.0);
+                if (mStateTime.milliseconds() > 500) {
+                    armSystem.moveNorth();
+                    newState(State.STATE_ROTATE_ARM);
+                }
+                break;
+
+            case STATE_ROTATE_ARM:
+                armSystem.raise(1.0);
+                if (mStateTime.milliseconds() > 500) {
+                    armSystem.setSliderHeight(0.0);
+                    newState(State.STATE_MOVE_INTO_WALL);
+                }
+                break;
+
+            case STATE_MOVE_INTO_WALL:
+                armSystem.raise(1.0);
+                if (driveSystem.driveToPosition(700, DriveSystem.Direction.FORWARD, 0.75)) {
+                    armSystem.openGripper();
+                    latchSystem.bothUp();
+                    armSystem.moveHome();
+                    newState(State.STATE_RAISE_ARM_FOR_HOME);
+                }
+                break;
+
+            case STATE_RAISE_ARM_FOR_HOME:
+                if (armSystem.isHoming()) {
+                    armSystem.autoHome();
+                } else {
+                    newState(State.STATE_PARK_AT_LINE);
+                }
+                break;
+
+            case STATE_BACKUP_SLIGHTLY_FROM_WALL:
+                if (driveSystem.driveToPosition(15, DriveSystem.Direction.BACKWARD, 1.0)) {
+                    newState(State.STATE_PARK_AT_LINE);
+                }
+                break;
+
+            case STATE_PARK_AT_LINE:
+//                if (currentTeam == Team.RED) {
+//                    if (colorSensor.red() > colorSensor.blue() * 1.25) {
+//                        driveSystem.stopAndReset();
+//                        newState(State.STATE_COMPLETE);
+//                        break;
+//                    }
+//                } else {
+//                    if (colorSensor.blue() > colorSensor.red() * 1.25) {
+//                        driveSystem.stopAndReset();
+//                        newState(State.STATE_COMPLETE);
+//                        break;
+//                    }
+//                }
+//                Log.d(TAG, "Blue: " + colorSensor.blue() + " Red: " + colorSensor.red());
+                if (driveSystem.driveToPosition(1200, outsideDirection, 0.6)) {
+                    newState(State.STATE_COMPLETE);
+                }
+                break;
+
+            case STATE_STRAFE_AWAY_FROM_FOUNDATION:
+                if (armSystem.isHoming()) {
+                    armSystem.autoHome();
+                }
+                if (driveSystem.driveToPosition(500, outsideDirection, 1.0)) {
+                    newState(State.STATE_TURN_FOR_BACKUP);
+                }
+                break;
+
+            case STATE_TURN_FOR_BACKUP:
+                if (driveSystem.turnAbsolute(0, 1.0)) {
+                    newState(State.STATE_BACKUP_FOR_SECOND_STONE);
+                    // Make it move more when it backs up
+                    if (skystoneOffset == DEAD_RECKON_SKYSTONE) {
+                        skystoneOffset = 230;
+                    }
+                }
+                break;
+
+            case STATE_BACKUP_FOR_SECOND_STONE:
+                if (driveSystem.driveToPosition(900 + Math.abs(skystoneOffset), DriveSystem.Direction.BACKWARD, 1.0)) {
+                    newState(State.STATE_FIND_STONE);
                 }
                 break;
 
             case STATE_FIND_STONE:
-                // Find a stone using TensorFlow
-                newState(State.STATE_GRAB_STONE);
+                recognitions = tensorflow.getInference();
+                if (recognitions != null) {
+                    for (Recognition recognition : recognitions) {
+                        if (recognition.getLabel().equals("Stone") || recognition.getLabel().equals("Skystone")) {
+                            double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
+                            sign = (int) Math.signum(degrees);
+                            alignStone = sign * (int) (300 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
+                            newState(State.STATE_INITIAL_ALIGN_STONE);
+                            break;
+                        }
+                    }
+                }
                 break;
 
-            case STATE_PARK_AT_LINE:
-                // Find the line
-                if (currentTeam == Team.BLUE) {
-                    if (colorSensor.blue() > colorSensor.red() * 1.5) {
-                        driveSystem.setMotorPower(0.0);
-                        newState(State.LOGGING);
+            case STATE_INITIAL_ALIGN_STONE:
+                if (driveSystem.driveToPosition((int) alignStone - 20, DriveSystem.Direction.FORWARD, 0.75)) {
+                    newState(State.STATE_APPROACH_STONE);
+                }
+                break;
+
+            case STATE_APPROACH_STONE:
+                if (distanceCenter.getDistance(DistanceUnit.MM) < 350) {
+                    driveSystem.stopAndReset();
+                    alignStone = distanceCenter.getDistance(DistanceUnit.MM);
+                    newState(State.STATE_ALIGN_STONE);
+                } else {
+                    driveSystem.driveToPosition(750, centerDirection, 0.7);
+                }
+                break;
+
+            case STATE_ALIGN_STONE:
+                if (driveSystem.driveToPosition(250, DriveSystem.Direction.BACKWARD, 1.0)) {
+                    newState(State.STATE_HORIZONTAL_ALIGN_STONE);
+                }
+                break;
+            case STATE_HORIZONTAL_ALIGN_STONE:
+                if (driveSystem.driveToPosition((int) alignStone + 120, centerDirection, 1.0)) {
+                    newState(State.STATE_INTAKE_STONE);
+                }
+                break;
+
+            case STATE_INTAKE_STONE:
+                if (driveSystem.driveToPosition(225, DriveSystem.Direction.FORWARD, 1.0)) {
+                    newState(State.STATE_ALIGN_FOR_BRIDGE);
+                }
+                break;
+
+            case STATE_ALIGN_FOR_BRIDGE:
+                if (driveSystem.driveToPosition((int) alignStone + 250, outsideDirection, 1.0)) {
+                    newState(State.STATE_MOVE_PAST_COLOR_LINE);
+                }
+                break;
+
+            case STATE_MOVE_PAST_COLOR_LINE:
+                if (currentTeam == Team.RED) {
+                    if (colorSensor.red() > colorSensor.blue() * 1.25) {
+                        driveSystem.drive(0, 0, 0.0f);
+                        newState(State.STATE_DEPOSIT_STONE);
                         break;
                     }
-                } else if (currentTeam == Team.RED) {
-                    if (colorSensor.red() > colorSensor.blue() * 1.5) {
-                        driveSystem.setMotorPower(0.0);
-                        newState(State.LOGGING);
+                } else {
+                    if (colorSensor.blue() > colorSensor.red() * 1.25) {
+                        driveSystem.drive(0, 0, 0.0f);
+                        newState(State.STATE_DEPOSIT_STONE);
                         break;
                     }
                 }
-                driveSystem.drive(0.0f, 0.0f, -0.2f);
+                Log.d(TAG, "Blue: " + colorSensor.blue() + " Red: " + colorSensor.red());
+                driveSystem.drive(0, 0, -0.75f);
                 break;
+
 
             case STATE_DEPOSIT_STONE:
-                // Put stone down on foundation
-                newState(State.STATE_RETURN);
+                if (mStateTime.milliseconds() > 1250) {
+                    intakeSystem.stop();
+                    newState(State.STATE_BACKUP_TO_LINE);
+                } else {
+                    intakeSystem.unsuck();
+                }
                 break;
 
-            case STATE_DRAG_FOUNDATION:
-                // Drag foundation out of box
-                newState(State.STATE_PARK_AT_LINE);
+            case STATE_BACKUP_TO_LINE:
+                if (driveSystem.driveToPosition(150, DriveSystem.Direction.BACKWARD, 1.0)) {
+                    newState(State.STATE_COMPLETE);
+                }
                 break;
 
-            case STATE_RETURN:
-                // Go back to block repository
-                newState(State.STATE_FIND_SKYSTONE);
+            case STATE_COMPLETE:
+
                 break;
         }
     }
 
-    public void newState(State newState) {
+    private void newState(State newState) {
         // Restarts the state clock as well as the state
         mStateTime.reset();
         mCurrentState = newState;
     }
 
 }
-
