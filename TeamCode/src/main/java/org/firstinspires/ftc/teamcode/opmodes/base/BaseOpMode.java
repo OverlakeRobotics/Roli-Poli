@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes.base;
 
+import android.util.Log;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -28,10 +30,12 @@ public abstract class BaseOpMode extends OpMode {
     protected LightSystem lightSystem;
     protected Vuforia vuforia;
     protected VuforiaTrackable skystone;
+    protected VuforiaTrackable rearPerimeter;
     protected ArmSystem armSystem;
     private boolean stopRequested;
 
     public void init(){
+        stopRequested = false;
         this.msStuckDetectInit = 20000;
         this.msStuckDetectInitLoop = 20000;
         EnumMap<DriveSystem.MotorNames, DcMotor> driveMap = new EnumMap<>(DriveSystem.MotorNames.class);
@@ -47,6 +51,7 @@ public abstract class BaseOpMode extends OpMode {
         latchSystem = new LatchSystem(latchMap);
 
         lightSystem = new LightSystem(hardwareMap.get(DigitalChannel.class, "right_light"), hardwareMap.get(DigitalChannel.class, "left_light"));
+        lightSystem.off();
 
         EnumMap<IntakeSystem.MotorNames, DcMotor> intakeMap = new EnumMap<>(IntakeSystem.MotorNames.class);
         for(IntakeSystem.MotorNames name : IntakeSystem.MotorNames.values()){
@@ -54,14 +59,16 @@ public abstract class BaseOpMode extends OpMode {
         }
         intakeSystem = new IntakeSystem(intakeMap, hardwareMap.get(Servo.class, "BOTTOM_INTAKE"));
 
+        DistanceSensor distanceSensor2;
+        DistanceSensor distanceSensor3;
+        ColorSensor colorSensor;
+
         EnumMap<ArmSystem.ServoNames, Servo> servoEnumMap = new EnumMap<>(ArmSystem.ServoNames.class);
 
         for (ArmSystem.ServoNames name : ArmSystem.ServoNames.values()) {
             servoEnumMap.put(name, hardwareMap.get(Servo.class, name.toString()));
         }
         armSystem = new ArmSystem(servoEnumMap, hardwareMap.get(DcMotor.class, "SLIDER_MOTOR"));
-
-        lightSystem.on();
 
     }
 
