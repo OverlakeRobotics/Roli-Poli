@@ -29,7 +29,7 @@ public class DriveSystem {
 
 
     public static final String TAG = "DriveSystem";
-    public static final double P_TURN_COEFF = 0.07;     // Larger is more responsive, but also less stable
+    public static final double P_TURN_COEFF = 0.018;     // Larger is more responsive, but also less stable
     public static final double HEADING_THRESHOLD = 1 ;      // As tight as we can make it with an integer gyro
 
     public EnumMap<MotorNames, DcMotor> motors;
@@ -40,7 +40,7 @@ public class DriveSystem {
     private double mTargetHeading;
 
     // 4 inches
-    private final double TICKS_IN_MM = 1.358267716;
+    private final double TICKS_IN_MM = 3.51;
 
     /**
      * Handles the data for the abstract creation of a drive system with four wheels
@@ -341,6 +341,12 @@ public class DriveSystem {
                     break;
             }
         });
+    }
+
+    public void stopAndReset() {
+        setMotorPower(0.0);
+        mTargetTicks = 0;
+        mTargetHeading = 0;
     }
 
     /**

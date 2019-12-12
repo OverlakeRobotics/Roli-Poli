@@ -83,23 +83,18 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_FIND_SKYSTONE:
                 List<Recognition> recognitions = tensorflow.getInference();
-                List<Integer> distances = new ArrayList<Integer>();
                 if (recognitions != null) {
+                    int maxDistance = -360;
                     for (Recognition recognition : recognitions) {
                         if (recognition.getLabel().equals("Skystone")) {
-                            double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
-                            int sign = (int) Math.signum(degrees);
-                            int currOffset = sign * (int) (300 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
+                            double radians = recognition.estimateAngleToObject(AngleUnit.RADIANS);
+                            int sign = (int) Math.signum(radians);
+                            int currOffset = sign * (int) (300 * (Math.tan(Math.abs(radians))));
                             currOffset -= 350;
                             // The skystone detected is one of the first three which means that
                             // the second skystone must be farthest from the audience
-                            distances.add(currOffset);
+                            maxDistance = currOffset;
                         }
-                    }
-                    // Set max to minimum value
-                    int maxDistance = Integer.MIN_VALUE;
-                    for (int value : distances) {
-                        maxDistance = Math.max(maxDistance, value);
                     }
                     // Set the skystoneOffset to be the maximum value
                     skystoneOffset = maxDistance;
@@ -111,13 +106,9 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 } else {
                     skystoneOffset = DEAD_RECKON_SKYSTONE;
                 }
-                // Blue strafing is worse so increase the value slightly
-                if (currentTeam == Team.BLUE) {
-                    skystoneOffset *= 1.1;
-                }
+
                 newState(State.STATE_ALIGN_SKYSTONE);
                 Log.d(TAG, "Skystone offset: " + skystoneOffset);
-                Log.d(TAG, "Distances: " + distances.toString());
                 break;
 
             case STATE_ALIGN_SKYSTONE:
