@@ -284,6 +284,12 @@ public class DriveSystem {
 
     }
 
+    // Gives the point at which to switch to less than full power
+    public static final double FULL_POWER_UNTIL = 0.85;
+
+    // Minimum speed to complete the turn
+    public static final double MIN_SPEED = 0.22;
+
     /**
      * Perform one cycle of closed loop heading control.
      * @param speed     Desired speed of turn
@@ -302,16 +308,15 @@ public class DriveSystem {
             return true;
         }
 
-        // TODO
         // Go full speed until 60% there
-        leftSpeed = error > Math.abs(0.85 * (mInitHeading)) ? speed : (speed * getSteer(error));
+        leftSpeed = error > Math.abs(FULL_POWER_UNTIL * (mInitHeading)) ? speed : (speed * getSteer(error));
         // leftSpeed = speed * getSteer(error);
 
 
         if (leftSpeed < 0) {
-            leftSpeed = Range.clip(leftSpeed, -1.0, -0.22);
+            leftSpeed = Range.clip(leftSpeed, -1.0, - 1 * MIN_SPEED);
         } else {
-            leftSpeed = Range.clip(leftSpeed, 0.22, 1.0);
+            leftSpeed = Range.clip(leftSpeed, MIN_SPEED, 1.0);
         }
         // Send desired speeds to motors.
         tankDrive(leftSpeed, -leftSpeed);
