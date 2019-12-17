@@ -139,6 +139,7 @@ public class DriveSystem {
     }
 
 
+    public static final double STRAFE_COEFF = 0.09;
     public boolean driveToPositionTicks(int ticks, Direction direction, double maxPower) {
         if(mTargetTicks == 0){
             mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
@@ -165,7 +166,6 @@ public class DriveSystem {
         }
 
         for (DcMotor motor : motors.values()) {
-//            Log.d(TAG, motor.toString() + ", " + motor.getPortNumber() + ": " + motor.getCurrentPosition());
             int offset = Math.abs(motor.getCurrentPosition() - mTargetTicks);
             if(offset <= 15){
                 // Shut down motors
@@ -180,34 +180,22 @@ public class DriveSystem {
         }
 
         double currHeading = imuSystem.getHeading();
-        Log.d("Curr heading: ", currHeading + " ");
         if (mStrafeSet && mStrafeHeading != currHeading && Direction.isStrafe(direction)) {
             double diff = computeDegreesDiff(mStrafeHeading, currHeading);
-            Log.d("Diff: ", diff + " ");
-            double strafe_coeff = direction == Direction.LEFT ? 0.09 : 0.08;
-            double correction = Range.clip(0.09 * diff, -1, 1);
+            double correction = Range.clip(STRAFE_COEFF * diff, -1, 1);
             int sign = direction == Direction.LEFT ? -1 : 1;
             motors.forEach((name, motor) -> {
                 switch(name) {
                     case FRONTLEFT:
                     case BACKLEFT:
-                        double maxLeft = direction == Direction.LEFT ? 1 : 0.9;
                         motor.setPower(correction > 0 ? 1 - sign * correction: 1);
-                        //double power = Range.clip(motor.getPower() + (0.23 * diff), -1, 1);
-                        //motor.setPower(power);
-                        // Log.d("motor: ", power + "");
                         break;
                     case FRONTRIGHT:
                     case BACKRIGHT:
-                        double maxRight = direction == Direction.RIGHT ? 1 : 0.9;
                         motor.setPower(correction < 0 ? 1 + sign * correction : 1);
-                        // double pow = Range.clip(motor.getPower() - (0.23 * diff), -1, 1);
-                        // motor.setPower(pow);
-                        // Log.d("motor: ", pow + "");
                         break;
                 }
             });
-            Log.d("drift: ",  imuSystem.getAcceleration() + "");
 
 
         }
@@ -324,7 +312,6 @@ public class DriveSystem {
         } else {
             leftSpeed = Range.clip(leftSpeed, 0.22, 1.0);
         }
-        Log.d(TAG,"Left Speed: " + leftSpeed);
         // Send desired speeds to motors.
         tankDrive(leftSpeed, -leftSpeed);
 
