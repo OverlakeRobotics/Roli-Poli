@@ -28,7 +28,6 @@ public abstract class BaseOpMode extends OpMode {
     protected LightSystem lightSystem;
     protected Vuforia vuforia;
     protected VuforiaTrackable skystone;
-    protected VuforiaTrackable rearPerimeter;
     protected ArmSystem armSystem;
     private boolean stopRequested;
 

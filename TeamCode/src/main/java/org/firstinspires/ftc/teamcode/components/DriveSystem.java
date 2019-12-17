@@ -22,9 +22,9 @@ public class DriveSystem {
         }
     }
 
-    public static final double SLOW_DRIVE_COEFF = 0.4;
+    public static final double SLOW_DRIVE_COEFF = 0.25;
 
-    public int counter = 0;
+    public int counter;
     public boolean slowDrive;
 
 
@@ -38,9 +38,16 @@ public class DriveSystem {
 
     private int mTargetTicks;
     private double mTargetHeading;
+    private double mInitHeading;
+    private double mStrafeHeading;
+    private boolean strafeSet;
+    private int mTurnCounter;
 
-    // 4 inches
-    private final double TICKS_IN_MM = 3.51;
+    // 12.566370614359173 inches circumference of a wheel
+    // 319.185813604722993 mm circumference of a wheel
+    // 1120 ticks in a revolution
+    // 1120 / 319.185813604722993 = 3.508927879
+    private final double TICKS_IN_MM = 3.508927879;
 
     /**
      * Handles the data for the abstract creation of a drive system with four wheels
@@ -48,6 +55,7 @@ public class DriveSystem {
     public DriveSystem(EnumMap<MotorNames, DcMotor> motors, BNO055IMU imu) {
         this.motors = motors;
         mTargetTicks = 0;
+        mTurnCounter = 0;
         initMotors();
         imuSystem = new IMUSystem(imu);
     }
@@ -63,17 +71,16 @@ public class DriveSystem {
     }
 
     public void initMotors() {
-
         motors.forEach((name, motor) -> {
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             switch(name) {
                 case FRONTLEFT:
+                case BACKLEFT:
                     motor.setDirection(DcMotorSimple.Direction.REVERSE);
                     break;
                 case FRONTRIGHT:
                 case BACKRIGHT:
-                case BACKLEFT:
                     motor.setDirection(DcMotorSimple.Direction.FORWARD);
                     break;
             }
@@ -96,8 +103,6 @@ public class DriveSystem {
      * @param leftX Left X joystick value
      * @param leftY Left Y joystick value in case you couldn't tell from the others
      */
-
-    // TODO
     public void drive(float rightX, float leftX, float leftY) {
         // Prevent small values from causing the robot to drift
         if (Math.abs(rightX) < 0.01) {
@@ -136,12 +141,13 @@ public class DriveSystem {
         slowDrive = false;
     }
 
+
     public boolean driveToPositionTicks(int ticks, Direction direction, double maxPower) {
         if(mTargetTicks == 0){
             mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
             motors.forEach((name, motor) -> {
                 motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                if(Direction.isStrafe(direction)){
+                if(Direction.isStrafe(direction)) {
                     int sign = direction == Direction.LEFT ? -1 : 1;
                     switch(name){
                         case FRONTLEFT:
@@ -162,26 +168,60 @@ public class DriveSystem {
         }
 
         for (DcMotor motor : motors.values()) {
+//            Log.d(TAG, motor.toString() + ", " + motor.getPortNumber() + ": " + motor.getCurrentPosition());
             int offset = Math.abs(motor.getCurrentPosition() - mTargetTicks);
-            if(offset <= 0){
-
+            if(offset <= 15){
                 // Shut down motors
                 setMotorPower(0);
-
                 // Reset motors to default run mode
                 setRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
                 // Reset target
                 mTargetTicks = 0;
-
                 // Motor has reached target
                 return true;
             }
         }
 
+        double currHeading = imuSystem.getHeading();
+        Log.d("Curr heading: ", currHeading + " ");
+        if (strafeSet && mStrafeHeading != currHeading && Direction.isStrafe(direction)) {
+            double diff = computeDegreesDiff(mStrafeHeading, currHeading);
+            Log.d("Diff: ", diff + " ");
+            double strafe_coeff = direction == Direction.LEFT ? 0.09 : 0.08;
+            double correction = Range.clip(0.09 * diff, -1, 1);
+            int sign = direction == Direction.LEFT ? -1 : 1;
+            motors.forEach((name, motor) -> {
+                switch(name) {
+                    case FRONTLEFT:
+                    case BACKLEFT:
+                        double maxLeft = direction == Direction.LEFT ? 1 : 0.9;
+                        motor.setPower(correction > 0 ? 1 - sign * correction: 1);
+                        //double power = Range.clip(motor.getPower() + (0.23 * diff), -1, 1);
+                        //motor.setPower(power);
+                        // Log.d("motor: ", power + "");
+                        break;
+                    case FRONTRIGHT:
+                    case BACKRIGHT:
+                        double maxRight = direction == Direction.RIGHT ? 1 : 0.9;
+                        motor.setPower(correction < 0 ? 1 + sign * correction : 1);
+                        // double pow = Range.clip(motor.getPower() - (0.23 * diff), -1, 1);
+                        // motor.setPower(pow);
+                        // Log.d("motor: ", pow + "");
+                        break;
+                }
+            });
+            Log.d("drift: ",  imuSystem.getAcceleration() + "");
+
+
+        }
         // Motor has not reached target
         return false;
+    }
 
+    public void stopAndReset() {
+        setMotorPower(0.0);
+        mTargetTicks = 0;
+        mTargetHeading = 0;
     }
 
     public void setRunMode(DcMotor.RunMode runMode) {
@@ -203,6 +243,10 @@ public class DriveSystem {
     }
 
     public boolean driveToPosition(int millimeters, Direction direction, double maxPower) {
+        if (!strafeSet) {
+            mStrafeHeading = imuSystem.getHeading();
+            strafeSet = true;
+        }
         return driveToPositionTicks(millimetersToTicks(millimeters), direction, maxPower);
     }
 
@@ -243,8 +287,11 @@ public class DriveSystem {
             Log.d(TAG, "Degrees: " + degrees);
         }
         double difference = mTargetHeading - heading;
+        if (mTurnCounter == 0) {
+            mInitHeading = difference;
+        }
         Log.d(TAG,"Difference: " + difference);
-
+        mTurnCounter++;
         return onHeading(maxPower, heading);
 
     }
@@ -254,28 +301,33 @@ public class DriveSystem {
      * @param speed     Desired speed of turn
      */
     public boolean onHeading(double speed, double heading) {
-        double steer;
         double leftSpeed;
-        double rightSpeed;
 
         // determine turn power based on +/- error
         double error = getError(heading);
 
+        // If it gets there: stop
         if (Math.abs(error) <= HEADING_THRESHOLD) {
             mTargetHeading = 0;
             setMotorPower(0);
+            mTurnCounter = 0;
             return true;
         }
 
-        steer = getSteer(error);
-        leftSpeed  = speed * steer;
-        rightSpeed   = -leftSpeed;
+        // TODO
+        // Go full speed until 60% there
+        leftSpeed = error > Math.abs(0.85 * (mInitHeading)) ? speed : (speed * getSteer(error));
+        // leftSpeed = speed * getSteer(error);
 
 
-        Log.d(TAG,"Left Speed:" + leftSpeed);
-        Log.d(TAG, "Right Speed:" + rightSpeed);
+        if (leftSpeed < 0) {
+            leftSpeed = Range.clip(leftSpeed, -1.0, -0.22);
+        } else {
+            leftSpeed = Range.clip(leftSpeed, 0.22, 1.0);
+        }
+        Log.d(TAG,"Left Speed: " + leftSpeed);
         // Send desired speeds to motors.
-        tankDrive(leftSpeed, rightSpeed);
+        tankDrive(leftSpeed, -leftSpeed);
 
         return false;
     }
@@ -343,12 +395,6 @@ public class DriveSystem {
         });
     }
 
-    public void stopAndReset() {
-        setMotorPower(0.0);
-        mTargetTicks = 0;
-        mTargetHeading = 0;
-    }
-
     /**
      * Gets the turn power needed
      * @param degrees Number of degrees to turn
@@ -369,4 +415,5 @@ public class DriveSystem {
         }
         return diff;
     }
+
 }

@@ -6,7 +6,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.teamcode.components.DriveSystem;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,32 +82,41 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_FIND_SKYSTONE:
                 List<Recognition> recognitions = tensorflow.getInference();
+                List<Integer> distances = new ArrayList<Integer>();
                 if (recognitions != null) {
-                    int maxDistance = -360;
                     for (Recognition recognition : recognitions) {
                         if (recognition.getLabel().equals("Skystone")) {
-                            double radians = recognition.estimateAngleToObject(AngleUnit.RADIANS);
-                            int sign = (int) Math.signum(radians);
-                            int currOffset = sign * (int) (300 * (Math.tan(Math.abs(radians))));
+                            double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
+                            int sign = (int) Math.signum(degrees);
+                            int currOffset = sign * (int) (300 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
                             currOffset -= 350;
                             // The skystone detected is one of the first three which means that
                             // the second skystone must be farthest from the audience
-                            maxDistance = currOffset;
+                            distances.add(currOffset);
                         }
+                    }
+                    // Set max to minimum value
+                    int maxDistance = Integer.MIN_VALUE;
+                    for (int value : distances) {
+                        maxDistance = Math.max(maxDistance, value);
                     }
                     // Set the skystoneOffset to be the maximum value
                     skystoneOffset = maxDistance;
                     // If the magnitude of the distance is greater than -360 the skystone is the
                     // first one
-                    if (skystoneOffset < -360) {
+                    if (skystoneOffset < -390) {
                         skystoneOffset = DEAD_RECKON_SKYSTONE;
                     }
                 } else {
                     skystoneOffset = DEAD_RECKON_SKYSTONE;
                 }
-
+                // Blue strafing is worse so increase the value slightly
+                if (currentTeam == Team.BLUE) {
+                    skystoneOffset *= 1.1;
+                }
                 newState(State.STATE_ALIGN_SKYSTONE);
                 Log.d(TAG, "Skystone offset: " + skystoneOffset);
+                Log.d(TAG, "Distances: " + distances.toString());
                 break;
 
             case STATE_ALIGN_SKYSTONE:
@@ -235,7 +243,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 //                    }
 //                }
 //                Log.d(TAG, "Blue: " + colorSensor.blue() + " Red: " + colorSensor.red());
-                if (driveSystem.driveToPosition(1200, outsideDirection, 0.6)) {
+                if (driveSystem.driveToPosition(1300, outsideDirection, 0.6)) {
                     newState(State.STATE_COMPLETE);
                 }
                 break;
