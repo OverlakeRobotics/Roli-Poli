@@ -141,6 +141,10 @@ public class DriveSystem {
 
     public static final double STRAFE_COEFF = 0.09;
     public boolean driveToPositionTicks(int ticks, Direction direction, double maxPower) {
+        if (!mStrafeSet) {
+            mStrafeHeading = imuSystem.getHeading();
+            mStrafeSet = true;
+        }
         if(mTargetTicks == 0){
             mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
             motors.forEach((name, motor) -> {
@@ -174,13 +178,15 @@ public class DriveSystem {
                 setRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 // Reset target
                 mTargetTicks = 0;
+                mStrafeSet = false;
+                mStrafeHeading = 0;
                 // Motor has reached target
                 return true;
             }
         }
 
         double currHeading = imuSystem.getHeading();
-        if (mStrafeSet && mStrafeHeading != currHeading && Direction.isStrafe(direction)) {
+        if (mStrafeSet && Direction.isStrafe(direction)) {
             double diff = computeDegreesDiff(mStrafeHeading, currHeading);
             double correction = Range.clip(STRAFE_COEFF * diff, -1, 1);
             int sign = direction == Direction.LEFT ? -1 : 1;
@@ -230,10 +236,6 @@ public class DriveSystem {
     }
 
     public boolean driveToPosition(int millimeters, Direction direction, double maxPower) {
-        if (!mStrafeSet) {
-            mStrafeHeading = imuSystem.getHeading();
-            mStrafeSet = true;
-        }
         return driveToPositionTicks(millimetersToTicks(millimeters), direction, maxPower);
     }
 
@@ -266,7 +268,6 @@ public class DriveSystem {
         // Since controller hub is vertical, use pitch instead of heading
         double heading = imuSystem.getHeading();
         // if controller hub is flat: double heading = imuSystem.getHeading();
-        Log.d(TAG,"Current Heading: " + heading);
         if(mTargetHeading == 0) {
             mTargetHeading = (heading + degrees) % 360;
             Log.d(TAG, "Setting Heading -- Target: " + mTargetHeading);
