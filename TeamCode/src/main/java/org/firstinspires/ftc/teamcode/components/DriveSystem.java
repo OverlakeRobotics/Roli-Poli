@@ -24,10 +24,6 @@ public class DriveSystem {
 
     public static final double SLOW_DRIVE_COEFF = 0.4;
 
-    public int counter;
-    public boolean slowDrive;
-
-
     public static final String TAG = "DriveSystem";
     public static final double P_TURN_COEFF = 0.018;     // Larger is more responsive, but also less stable
     public static final double HEADING_THRESHOLD = 1 ;      // As tight as we can make it with an integer gyro
@@ -40,14 +36,15 @@ public class DriveSystem {
     private double mTargetHeading;
     private double mInitHeading;
     private double mStrafeHeading;
-    private boolean strafeSet;
+    private boolean mStrafeSet;
     private int mTurnCounter;
+    public boolean mSlowDrive;
 
-    // 12.566370614359173 inches circumference of a wheel
-    // 319.185813604722993 mm circumference of a wheel
+    // 12.6 inches circumference of a wheel
+    // 319 mm circumference of a wheel
     // 1120 ticks in a revolution
-    // 1120 / 319.185813604722993 = 3.508927879
-    private final double TICKS_IN_MM = 3.508927879;
+    // 1120 / 319 = 3.51
+    private final double TICKS_IN_MM = 3.51;
 
     /**
      * Handles the data for the abstract creation of a drive system with four wheels
@@ -89,11 +86,11 @@ public class DriveSystem {
     }
 
     public void slowDrive(boolean on) {
-        slowDrive = on;
+        mSlowDrive = on;
     }
 
     private void setDriveSpeed(DcMotor motor, double motorPower) {
-        motor.setPower(Range.clip(slowDrive ?
+        motor.setPower(Range.clip(mSlowDrive ?
                 SLOW_DRIVE_COEFF * motorPower : motorPower, -1, 1));
     }
 
@@ -138,7 +135,7 @@ public class DriveSystem {
                     break;
             }
         });
-        slowDrive = false;
+        mSlowDrive = false;
     }
 
 
@@ -184,7 +181,7 @@ public class DriveSystem {
 
         double currHeading = imuSystem.getHeading();
         Log.d("Curr heading: ", currHeading + " ");
-        if (strafeSet && mStrafeHeading != currHeading && Direction.isStrafe(direction)) {
+        if (mStrafeSet && mStrafeHeading != currHeading && Direction.isStrafe(direction)) {
             double diff = computeDegreesDiff(mStrafeHeading, currHeading);
             Log.d("Diff: ", diff + " ");
             double strafe_coeff = direction == Direction.LEFT ? 0.09 : 0.08;
@@ -222,6 +219,8 @@ public class DriveSystem {
         setMotorPower(0.0);
         mTargetTicks = 0;
         mTargetHeading = 0;
+        mStrafeHeading = 0;
+        mStrafeSet = false;
     }
 
     public void setRunMode(DcMotor.RunMode runMode) {
@@ -243,9 +242,9 @@ public class DriveSystem {
     }
 
     public boolean driveToPosition(int millimeters, Direction direction, double maxPower) {
-        if (!strafeSet) {
+        if (!mStrafeSet) {
             mStrafeHeading = imuSystem.getHeading();
-            strafeSet = true;
+            mStrafeSet = true;
         }
         return driveToPositionTicks(millimetersToTicks(millimeters), direction, maxPower);
     }
