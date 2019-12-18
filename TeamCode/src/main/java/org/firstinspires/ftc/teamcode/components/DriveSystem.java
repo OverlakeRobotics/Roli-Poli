@@ -332,15 +332,7 @@ public class DriveSystem {
      */
     public double getError(double heading) {
         // calculate error in -179 to +180 range  (
-        double robotError = mTargetHeading - heading;
-        Log.d(TAG,"Robot Error: " + robotError);
-        while (robotError > 180) {
-            robotError -= 360;
-        }
-        while (robotError <= -180) {
-            robotError += 360;
-        }
-        return robotError;
+        return computeDegreesDiff(mTargetHeading, heading);
     }
 
     public double diffFromAbs(double heading) {
