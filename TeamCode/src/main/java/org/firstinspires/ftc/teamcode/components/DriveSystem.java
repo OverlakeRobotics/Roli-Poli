@@ -141,10 +141,6 @@ public class DriveSystem {
 
     public static final double STRAFE_COEFF = 0.09;
     public boolean driveToPositionTicks(int ticks, Direction direction, double maxPower) {
-        if (!mStrafeSet) {
-            mStrafeHeading = imuSystem.getHeading();
-            mStrafeSet = true;
-        }
         if(mTargetTicks == 0){
             mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
             motors.forEach((name, motor) -> {
@@ -173,37 +169,37 @@ public class DriveSystem {
             int offset = Math.abs(motor.getCurrentPosition() - mTargetTicks);
             if(offset <= 15){
                 // Shut down motors
-                setMotorPower(0);
+                // Reset target
+                stopAndReset();
                 // Reset motors to default run mode
                 setRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                // Reset target
-                mTargetTicks = 0;
-                mStrafeSet = false;
-                mStrafeHeading = 0;
                 // Motor has reached target
                 return true;
             }
         }
 
         double currHeading = imuSystem.getHeading();
-        if (mStrafeSet && Direction.isStrafe(direction)) {
-            double diff = computeDegreesDiff(mStrafeHeading, currHeading);
-            double correction = Range.clip(STRAFE_COEFF * diff, -1, 1);
-            int sign = direction == Direction.LEFT ? -1 : 1;
-            motors.forEach((name, motor) -> {
-                switch(name) {
-                    case FRONTLEFT:
-                    case BACKLEFT:
-                        motor.setPower(correction > 0 ? 1 - sign * correction: 1);
-                        break;
-                    case FRONTRIGHT:
-                    case BACKRIGHT:
-                        motor.setPower(correction < 0 ? 1 + sign * correction : 1);
-                        break;
-                }
-            });
-
-
+        if (Direction.isStrafe(direction)) {
+            if (mStrafeSet) {
+                double diff = computeDegreesDiff(mStrafeHeading, currHeading);
+                double correction = Range.clip(STRAFE_COEFF * diff, -1, 1);
+                int sign = direction == Direction.LEFT ? -1 : 1;
+                motors.forEach((name, motor) -> {
+                    switch(name) {
+                        case FRONTLEFT:
+                        case BACKLEFT:
+                            motor.setPower(correction > 0 ? 1 - sign * correction: 1);
+                            break;
+                        case FRONTRIGHT:
+                        case BACKRIGHT:
+                            motor.setPower(correction < 0 ? 1 + sign * correction : 1);
+                            break;
+                    }
+                });
+            } else {
+                mStrafeHeading = imuSystem.getHeading();
+                mStrafeSet = true;
+            }
         }
         // Motor has not reached target
         return false;
