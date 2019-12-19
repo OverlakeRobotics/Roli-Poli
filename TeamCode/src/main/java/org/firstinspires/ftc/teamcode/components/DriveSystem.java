@@ -217,18 +217,6 @@ public class DriveSystem {
         }
     }
 
-    /**
-     * Gets the minimum distance from the target
-     * @return
-     */
-    public int  getMinDistanceFromTarget() {
-        int distance = Integer.MAX_VALUE;
-        for (DcMotor motor : motors.values()) {
-            distance = Math.min(distance, motor.getTargetPosition() - motor.getCurrentPosition());
-        }
-        return distance;
-    }
-
     public boolean driveToPosition(int millimeters, Direction direction, double maxPower) {
         return driveToPositionTicks(millimetersToTicks(millimeters), direction, maxPower);
     }
@@ -236,7 +224,7 @@ public class DriveSystem {
     /**
      * Converts millimeters to ticks
      * @param millimeters Millimeters to convert to ticks
-     * @return
+     * @return number of ticks
      */
     public int millimetersToTicks(int millimeters) {
         return (int) Math.round(millimeters * TICKS_IN_MM);
@@ -274,14 +262,14 @@ public class DriveSystem {
     }
 
     // Gives the point at which to switch to less than full power
-    public static final double FULL_POWER_UNTIL = 40;
+    public static final double FULL_POWER_UNTIL = 30;
 
     // Minimum speed to complete the turn
     public static final double MIN_SPEED = 0.22;
 
     /**
      * Perform one cycle of closed loop heading control.
-     * @param speed     Desired speed of turn
+     * @param speed Desired speed of turn
      */
     public boolean onHeading(double speed, double heading) {
         double leftSpeed;
