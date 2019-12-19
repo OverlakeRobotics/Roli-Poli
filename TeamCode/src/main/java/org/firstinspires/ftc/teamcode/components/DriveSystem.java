@@ -34,10 +34,7 @@ public class DriveSystem {
 
     private int mTargetTicks;
     private double mTargetHeading;
-    private double mInitHeading;
-    private double mStrafeHeading;
     private boolean mStrafeSet;
-    private int mTurnCounter;
     public boolean mSlowDrive;
 
     // 12.6 inches circumference of a wheel
@@ -52,7 +49,6 @@ public class DriveSystem {
     public DriveSystem(EnumMap<MotorNames, DcMotor> motors, BNO055IMU imu) {
         this.motors = motors;
         mTargetTicks = 0;
-        mTurnCounter = 0;
         initMotors();
         imuSystem = new IMUSystem(imu);
     }
@@ -272,17 +268,13 @@ public class DriveSystem {
             Log.d(TAG, "Degrees: " + degrees);
         }
         double difference = mTargetHeading - heading;
-        if (mTurnCounter == 0) {
-            mInitHeading = difference;
-        }
         Log.d(TAG,"Difference: " + difference);
-        mTurnCounter++;
         return onHeading(maxPower, heading);
 
     }
 
     // Gives the point at which to switch to less than full power
-    public static final double FULL_POWER_UNTIL = 0.85;
+    public static final double FULL_POWER_UNTIL = 40;
 
     // Minimum speed to complete the turn
     public static final double MIN_SPEED = 0.22;
@@ -301,12 +293,11 @@ public class DriveSystem {
         if (Math.abs(error) <= HEADING_THRESHOLD) {
             mTargetHeading = 0;
             setMotorPower(0);
-            mTurnCounter = 0;
             return true;
         }
 
         // Go full speed until 60% there
-        leftSpeed = error > Math.abs(FULL_POWER_UNTIL * (mInitHeading)) ? speed : (speed * getSteer(error));
+        leftSpeed = Math.abs(error) > FULL_POWER_UNTIL ? speed : (speed * getSteer(error));
         // leftSpeed = speed * getSteer(error);
 
 
