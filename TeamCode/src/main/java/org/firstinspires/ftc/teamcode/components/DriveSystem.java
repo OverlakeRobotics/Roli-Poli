@@ -178,10 +178,9 @@ public class DriveSystem {
             }
         }
 
-        double currHeading = imuSystem.getHeading();
         if (Direction.isStrafe(direction)) {
             if (mStrafeSet) {
-                double diff = computeDegreesDiff(mStrafeHeading, currHeading);
+                double diff = computeDegreesDiff();
                 double correction = Range.clip(STRAFE_COEFF * diff, -1, 1);
                 int sign = direction == Direction.LEFT ? -1 : 1;
                 motors.forEach((name, motor) -> {
@@ -208,12 +207,11 @@ public class DriveSystem {
         setMotorPower(0.0);
         mTargetTicks = 0;
         mTargetHeading = 0;
-        mStrafeHeading = 0;
         mStrafeSet = false;
     }
 
     private void strafeInit() {
-        mStrafeHeading = imuSystem.getHeading();
+        mTargetHeading = imuSystem.getHeading();
         mStrafeSet = true;
     }
 
@@ -253,7 +251,6 @@ public class DriveSystem {
      * @param degrees The degrees to turn the robot by
      * @param maxPower The maximum power of the motors
      */
-    // TODO
     public boolean turnAbsolute(double degrees, double maxPower) {
         // Since it is vertical, use pitch instead of heading
         return turn(diffFromAbs(degrees), maxPower);
@@ -298,7 +295,7 @@ public class DriveSystem {
         double leftSpeed;
 
         // determine turn power based on +/- error
-        double error = getError(heading);
+        double error = computeDegreesDiff();
 
         // If it gets there: stop
         if (Math.abs(error) <= HEADING_THRESHOLD) {
@@ -330,12 +327,8 @@ public class DriveSystem {
      * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
      *          +ve error means the robot should turn LEFT (CCW) to reduce error.
      */
-    public double getError(double heading) {
-        // calculate error in -179 to +180 range  (
-        return computeDegreesDiff(mTargetHeading, heading);
-    }
 
-    public double diffFromAbs(double heading) {
+    private double diffFromAbs(double heading) {
         // calculate error in -179 to +180 range
         // When vertical use pitch instead of heading
         double robotDiff = heading - imuSystem.getHeading();
@@ -389,8 +382,13 @@ public class DriveSystem {
         return Range.clip(degrees / 100.0, -maxPower, maxPower);
     }
 
-    private double computeDegreesDiff(double targetHeading, double heading) {
-        double diff = targetHeading - heading;
+    /**
+     * computeDegreesDiff determines the error between the target angle and the robot's current heading
+     * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
+     *          +ve error means the robot should turn LEFT (CCW) to reduce error.
+     */
+    private double computeDegreesDiff() {
+        double diff = mTargetHeading - imuSystem.getHeading();
         if (diff > 180) {
             return diff - 360;
         }
