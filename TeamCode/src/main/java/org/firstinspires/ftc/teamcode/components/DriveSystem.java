@@ -197,8 +197,7 @@ public class DriveSystem {
                     }
                 });
             } else {
-                mStrafeHeading = imuSystem.getHeading();
-                mStrafeSet = true;
+                strafeInit();
             }
         }
         // Motor has not reached target
@@ -211,6 +210,11 @@ public class DriveSystem {
         mTargetHeading = 0;
         mStrafeHeading = 0;
         mStrafeSet = false;
+    }
+
+    private void strafeInit() {
+        mStrafeHeading = imuSystem.getHeading();
+        mStrafeSet = true;
     }
 
     public void setRunMode(DcMotor.RunMode runMode) {
