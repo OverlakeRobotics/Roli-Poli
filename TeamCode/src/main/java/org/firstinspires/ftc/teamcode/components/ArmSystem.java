@@ -16,37 +16,6 @@ import java.util.EnumMap;
         - Pivot
  */
 public class ArmSystem {
-    private DcMotor slider;
-    private final double GRIPPER_OPEN = 0.9;
-    private final double GRIPPER_CLOSE = 0.3;
-
-    // This is in block positions, not ticks
-    public double targetHeight;
-
-    private enum Direction {
-        UP, DOWN;
-        private static Direction reverse(Direction direction){
-            return direction == UP ? DOWN : UP;
-        }
-
-        private static DcMotorSimple.Direction motorDirection(Direction direction){
-            return direction == UP ?
-                    DcMotorSimple.Direction.REVERSE :
-                    DcMotorSimple.Direction.FORWARD;
-        }
-    };
-
-    private Direction direction;
-    private boolean homing;
-    private boolean gettingCapstone;
-    // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
-    public int calibrationDistance;
-
-    // This can actually be more, like 5000, but we're not going to stack that high
-    // for the first comp and the servo wires aren't long enough yet
-    private final int MAX_HEIGHT = calculateHeight(9);
-    private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
-
     public enum Position {
         // Double values ordered Pivot, elbow, wrist.
         POSITION_HOME(new double[] {0.98, 0.17, 0.79}),
@@ -71,9 +40,43 @@ public class ArmSystem {
         GRIPPER, WRIST, ELBOW, PIVOT
     }
 
-    public static final String TAG = "ArmSystem"; // for debugging
+    private enum Direction {
+        UP, DOWN;
+        private static Direction reverse(Direction direction){
+            return direction == UP ? DOWN : UP;
+        }
+
+        private static DcMotorSimple.Direction motorDirection(Direction direction){
+            return direction == UP ?
+                    DcMotorSimple.Direction.REVERSE :
+                    DcMotorSimple.Direction.FORWARD;
+        }
+    };
+
+    private Direction mDirection;
+    private boolean mHoming;
+    private boolean mGettingCapstone;
+    // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
+    public int mCalibrationDistance;
 
     private EnumMap<ServoNames, Servo> servoEnumMap;
+    private DcMotor slider;
+
+    // This is in block positions, not ticks
+    public double targetHeight;
+    // These two variables are used for all the auto methods.
+    private int mCount = 0; // Used to wait a bit
+    private boolean mWaiting = false;
+
+    // This can actually be more, like 5000, but we're not going to stack that high
+    // for the first comp and the servo wires aren't long enough yet
+    private final int MAX_HEIGHT = calculateHeight(9);
+    private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
+    private final double GRIPPER_OPEN = 0.9;
+    private final double GRIPPER_CLOSE = 0.3;
+
+    public static final String TAG = "ArmSystem"; // for debugging
+
     /*
      If the robot is at the bottom of the screen, and X is the block:
 
@@ -92,10 +95,10 @@ public class ArmSystem {
     public ArmSystem(EnumMap<ServoNames, Servo> servos, DcMotor slider) {
         servoEnumMap = servos;
         this.slider = slider;
-        this.calibrationDistance = slider.getCurrentPosition();
-        this.direction = Direction.UP;
+        this.mCalibrationDistance = slider.getCurrentPosition();
+        this.mDirection = Direction.UP;
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.homing = false;
+        this.mHoming = false;
         movePresetPosition(Position.POSITION_HOME);
         openGripper();
     }
@@ -120,22 +123,17 @@ public class ArmSystem {
 
     // Go to capstone position
     public void moveCapstone() {
-        gettingCapstone = true;
+        mGettingCapstone = true;
         setSliderHeight(2);
         autoCapstone();
     }
 
     // Go to the home position
     public void moveHome() {
-        homing = true;
+        mHoming = true;
         setSliderHeight(2);
         autoHome();
     }
-
-
-    // These two variables are used for all the auto methods.
-    private int mCount = 0; // Used to wait a bit
-    private boolean mWaiting = false;
 
     // Moves the slider up to one block high, moves the gripper to the home position, and then moves
     // back down so we can fit under the bridge.
@@ -145,7 +143,7 @@ public class ArmSystem {
             if (mCount > 30) {
                 mWaiting = false;
                 mCount = 0;
-                homing = false;
+                mHoming = false;
                 setSliderHeight(0);
             }
         }
@@ -165,7 +163,7 @@ public class ArmSystem {
             if (mCount > 30) {
                 mWaiting = false;
                 mCount = 0;
-                gettingCapstone = false;
+                mGettingCapstone = false;
                 setSliderHeight(0.5);
             }
         }
@@ -232,7 +230,7 @@ public class ArmSystem {
 
     // Little helper method for setSliderHeight
     private int calculateHeight(double pos){
-        return (int) (pos == 0 ? calibrationDistance - 20 : calibrationDistance + (pos * INCREMENT_HEIGHT));
+        return (int) (pos == 0 ? mCalibrationDistance - 20 : mCalibrationDistance + (pos * INCREMENT_HEIGHT));
     }
 
     // Must be called every loop
@@ -246,8 +244,8 @@ public class ArmSystem {
     }
 
     public boolean isHoming() {
-        return homing;
+        return mHoming;
     }
 
-    public boolean isGettingCapstone() { return gettingCapstone; }
+    public boolean isGettingCapstone() { return mGettingCapstone; }
 }
