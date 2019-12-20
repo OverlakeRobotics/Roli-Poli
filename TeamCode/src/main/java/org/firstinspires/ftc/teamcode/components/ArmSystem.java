@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import  com.qualcomm.robotcore.hardware.Servo;
 import java.util.EnumMap;
 
@@ -47,7 +46,6 @@ public class ArmSystem {
     // for the first comp and the servo wires aren't long enough yet
     private final int MAX_HEIGHT = calculateHeight(9);
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
-    private final int START_HEIGHT = 0; // Height of the foundation
 
     public enum Position {
         // Double values ordered Pivot, elbow, wrist.
@@ -74,12 +72,8 @@ public class ArmSystem {
     }
 
     public static final String TAG = "ArmSystem"; // for debugging
-    private boolean gripped;
-    private boolean goUp;
-    private boolean goDown;
 
     private EnumMap<ServoNames, Servo> servoEnumMap;
-    private DigitalChannel limitSwitch;
     /*
      If the robot is at the bottom of the screen, and X is the block:
 
@@ -110,6 +104,7 @@ public class ArmSystem {
     public void moveWest() {
         movePresetPosition(Position.POSITION_WEST);
     }
+
     // Go to "north" position
     public void moveNorth () {
         movePresetPosition(Position.POSITION_NORTH);
@@ -122,6 +117,7 @@ public class ArmSystem {
     public void moveSouth() {
         movePresetPosition(Position.POSITION_SOUTH);
     }
+
     // Go to capstone position
     public void moveCapstone() {
         gettingCapstone = true;
@@ -138,17 +134,17 @@ public class ArmSystem {
 
 
     // These two variables are used for all the auto methods.
-    private int m_count = 0; // Used to wait a bit
-    private boolean m_waiting = false;
+    private int mCount = 0; // Used to wait a bit
+    private boolean mWaiting = false;
 
     // Moves the slider up to one block high, moves the gripper to the home position, and then moves
     // back down so we can fit under the bridge.
     public void autoHome() {
-        if (m_waiting) {
-            m_count ++;
-            if (m_count > 30) {
-                m_waiting = false;
-                m_count = 0;
+        if (mWaiting) {
+            mCount++;
+            if (mCount > 30) {
+                mWaiting = false;
+                mCount = 0;
                 homing = false;
                 setSliderHeight(0);
             }
@@ -156,7 +152,7 @@ public class ArmSystem {
         if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
             movePresetPosition(Position.POSITION_HOME);
             openGripper();
-            m_waiting = true;
+            mWaiting = true;
         }
 
         raise(1);
@@ -164,11 +160,11 @@ public class ArmSystem {
 
 
     public void autoCapstone() {
-        if (m_waiting) {
-            m_count ++;
-            if (m_count > 30) {
-                m_waiting = false;
-                m_count = 0;
+        if (mWaiting) {
+            mCount++;
+            if (mCount > 30) {
+                mWaiting = false;
+                mCount = 0;
                 gettingCapstone = false;
                 setSliderHeight(0.5);
             }
@@ -176,7 +172,7 @@ public class ArmSystem {
         if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
             movePresetPosition(Position.POSITION_CAPSTONE);
             openGripper();
-            m_waiting = true;
+            mWaiting = true;
         }
 
         raise(1);
@@ -215,10 +211,14 @@ public class ArmSystem {
     }
 
     // Pos should be the # of blocks high it should be
-    public void setSliderHeight(double pos){
-        targetHeight = pos;
-        if (pos < 0) targetHeight = 0;
-        if (pos > 5) targetHeight = 5;
+    public void setSliderHeight(double pos) {
+        if (pos < 0) {
+            targetHeight = 0;
+        } else if (pos > 5) {
+            targetHeight = 5;
+        } else {
+            targetHeight = pos;
+        }
         slider.setTargetPosition(calculateHeight(targetHeight));
         slider.setDirection(Direction.motorDirection(Direction.UP));
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -232,19 +232,13 @@ public class ArmSystem {
 
     // Little helper method for setSliderHeight
     private int calculateHeight(double pos){
-        if (pos == 0) return calibrationDistance - 20;
-        return (int) (calibrationDistance + (pos * INCREMENT_HEIGHT));
+        return (int) (pos == 0 ? calibrationDistance - 20 : calibrationDistance + (pos * INCREMENT_HEIGHT));
     }
 
     // Must be called every loop
-    private boolean m_switch = false;
     public void raise(double speed){
         slider.setPower(speed);
         slider.setTargetPosition(calculateHeight(targetHeight));
-    }
-
-    public boolean switchIsPressed() {
-        return !limitSwitch.getState();
     }
 
     public int getSliderPos() {
@@ -256,9 +250,4 @@ public class ArmSystem {
     }
 
     public boolean isGettingCapstone() { return gettingCapstone; }
-
-    // Moves slider back to original state
-//    public void stop() {
-//        slider.setTargetPosition(calibrationDistance);
-//    }
 }
