@@ -217,7 +217,7 @@ public class ArmSystem {
         } else {
             targetHeight = pos;
         }
-        slider.setTargetPosition(calculateHeight(targetHeight));
+        setPosTarget();
         slider.setDirection(Direction.motorDirection(Direction.UP));
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         raise(1);
@@ -236,7 +236,7 @@ public class ArmSystem {
     // Must be called every loop
     public void raise(double speed){
         slider.setPower(speed);
-        slider.setTargetPosition(calculateHeight(targetHeight));
+        setPosTarget();
     }
 
     public int getSliderPos() {
@@ -248,4 +248,8 @@ public class ArmSystem {
     }
 
     public boolean isGettingCapstone() { return mGettingCapstone; }
+
+    private void setPosTarget() {
+        slider.setTargetPosition(calculateHeight(targetHeight));
+    }
 }
