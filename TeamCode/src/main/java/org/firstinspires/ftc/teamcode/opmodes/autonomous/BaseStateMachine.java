@@ -56,7 +56,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
     }
 
     private int skystoneOffset;
-    private static final int DEAD_RECKON_SKYSTONE = -30;
+    private static final int DEAD_RECKON_SKYSTONE = -20;
     private double alignStone;
     @Override
     public void loop() {
@@ -83,11 +83,11 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 List<Integer> distances = new ArrayList<>();
                 if (recognitions != null) {
                     for (Recognition recognition : recognitions) {
-                        if (recognition.getLabel().equals("Skystone")) {
+                        if (recognition.getLabel().equalsIgnoreCase("Skystone")) {
                             double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
                             int sign = (int) Math.signum(degrees);
-                            int currOffset = sign * (int) (300 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
-                            currOffset -= 150;
+                            int currOffset = sign * (int) (320 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
+                            currOffset -= 215;
                             // The skystone detected is one of the first three which means that
                             // the second skystone must be farthest from the audience
                             distances.add(currOffset);
@@ -102,7 +102,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                     skystoneOffset = maxDistance;
                     // If the magnitude of the distance is greater than -360 the skystone is the
                     // first one
-                    if (skystoneOffset < -350) {
+                    if (skystoneOffset < -245) {
                         skystoneOffset = DEAD_RECKON_SKYSTONE;
                     }
                 } else {
@@ -128,11 +128,11 @@ public abstract class BaseStateMachine extends BaseAutonomous {
             case STATE_HORIZONTAL_ALIGN_SKYSTONE:
                 armSystem.runSliderToTarget();
                 if (currentTeam == Team.BLUE) {
-                    if (driveSystem.driveToPosition(1100, centerDirection, 0.7)) {
+                    if (driveSystem.driveToPosition(925, centerDirection, 0.7)) {
                         newState(State.STATE_INTAKE_SKYSTONE);
                     }
                 } else {
-                    if (driveSystem.driveToPosition(1000, centerDirection, 0.7)) {
+                    if (driveSystem.driveToPosition(925, centerDirection, 0.7)) {
                         newState(State.STATE_INTAKE_SKYSTONE);
                     }
                 }
@@ -158,7 +158,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
             case STATE_REALIGN_HEADING:
                 armSystem.runSliderToTarget();
                 intakeSystem.suck();
-                if (driveSystem.turnAbsolute(0, 1.0)) {
+                if (driveSystem.turnAbsolute(3, 1.0)) {
                     intakeSystem.stop();
                     armSystem.closeGripper();
                     newState(State.STATE_MOVE_PAST_LINE);
@@ -173,13 +173,13 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_TURN_FOR_FOUNDATION:
                 int sign = currentTeam == Team.RED ? 1 : -1;
-                if (driveSystem.turnAbsolute(90 * sign, 1.0)) {
+                if (driveSystem.turnAbsolute(85 * sign, 1.0)) {
                     newState(State.STATE_BACKUP_INTO_FOUNDATION);
                 }
                 break;
 
             case STATE_BACKUP_INTO_FOUNDATION:
-                if (driveSystem.driveToPosition(225, DriveSystem.Direction.BACKWARD, 0.75)) {
+                if (driveSystem.driveToPosition(250, DriveSystem.Direction.BACKWARD, 0.75)) {
                     latchSystem.bothDown();
                     armSystem.setSliderHeight(2.0);
                     newState(State.STATE_RAISE_ARM);
