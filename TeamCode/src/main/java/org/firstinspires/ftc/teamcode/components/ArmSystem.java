@@ -117,14 +117,12 @@ public class ArmSystem {
         if (!mWaiting.hasExpired()) {
             mBusy = false;
             setSliderHeight(0.5);
-        }
-        if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
+        } else if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
             movePresetPosition(Position.POSITION_CAPSTONE);
             openGripper();
             mWaiting.reset();
         }
-
-        raise(1);
+        runSliderToTarget(1);
         return mBusy;
     }
 
@@ -144,7 +142,7 @@ public class ArmSystem {
             mWaiting.reset();
         }
 
-        raise(1);
+        runSliderToTarget(1);
         return mBusy;
     }
 
@@ -191,7 +189,7 @@ public class ArmSystem {
         }
         setPosTarget();
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        raise(1);
+        runSliderToTarget(1);
     }
 
     public void setSliderHeight(int pos) {
@@ -205,9 +203,15 @@ public class ArmSystem {
     }
 
     // Must be called every loop
-    public void raise(double speed){
-        slider.setPower(speed);
-        setPosTarget();
+    public boolean runSliderToTarget(double speed){
+        int targetHeight = calculateHeight(mTargetHeight);
+        if (slider.getCurrentPosition() != targetHeight) {
+            slider.setPower(speed);
+            setPosTarget();
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public int getSliderPos() {
