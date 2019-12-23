@@ -125,37 +125,9 @@ public class ArmSystem {
     }
 
     // Go to capstone position
-    public void moveCapstone() {
+    public boolean moveCapstone() {
         mGettingCapstone = true;
         setSliderHeight(2);
-        autoCapstone();
-    }
-
-    // Go to the home position
-    public void moveHome() {
-        mHoming = true;
-        setSliderHeight(2);
-        autoHome();
-    }
-
-    // Moves the slider up to one block high, moves the gripper to the home position, and then moves
-    // back down so we can fit under the bridge.
-    public void autoHome() {
-        if (!mWaiting.hasExpired()) {
-            mHoming = false;
-            setSliderHeight(0);
-        }
-        if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
-            movePresetPosition(Position.POSITION_HOME);
-            openGripper();
-            mWaiting.reset();
-        }
-
-        raise(1);
-    }
-
-
-    public void autoCapstone() {
         if (!mWaiting.hasExpired()) {
             mGettingCapstone = false;
             setSliderHeight(0.5);
@@ -167,6 +139,27 @@ public class ArmSystem {
         }
 
         raise(1);
+        return mGettingCapstone;
+    }
+
+    // Go to the home position
+    // Moves the slider up to one block high, moves the gripper to the home position, and then moves
+    // back down so we can fit under the bridge.
+    public boolean moveHome() {
+        mHoming = true;
+        setSliderHeight(2);
+        if (!mWaiting.hasExpired()) {
+            mHoming = false;
+            setSliderHeight(0);
+        }
+        if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
+            movePresetPosition(Position.POSITION_HOME);
+            openGripper();
+            mWaiting.reset();
+        }
+
+        raise(1);
+        return mHoming;
     }
 
     public void openGripper() {
