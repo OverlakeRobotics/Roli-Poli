@@ -349,7 +349,7 @@ public class DriveSystem {
      */
     private double computeDegreesDiff() {
         double diff = mTargetHeading - imuSystem.getHeading();
-        return diff % 180;
+        return Math.abs(diff) == 180 ? diff : diff % 180;
     }
 
 }
