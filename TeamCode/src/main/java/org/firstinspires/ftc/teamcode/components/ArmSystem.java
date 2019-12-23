@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import  com.qualcomm.robotcore.hardware.Servo;
 import java.util.EnumMap;
 
@@ -51,7 +50,7 @@ public class ArmSystem {
 
     public enum Position {
         // Double values ordered Pivot, elbow, wrist.
-        POSITION_HOME(new double[] {0.98, 0.17, 0.79}),
+        POSITION_HOME(new double[] {0.96, 0.15, 0.79}),
         POSITION_WEST(new double[] {0.16, 0.22, 0.72}),
         POSITION_SOUTH(new double[] {0.16, 0.22, 0.37}),
         POSITION_EAST(new double[] {0.16, 0.58, 0.37}),
