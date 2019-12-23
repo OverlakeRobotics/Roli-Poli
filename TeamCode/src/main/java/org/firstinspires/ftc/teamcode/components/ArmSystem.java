@@ -9,7 +9,6 @@ import java.util.EnumMap;
 
 /*
     This class controls everything related to the arm, including driver assist features.
-
     IMPORTANT: When working on this class (and arm stuff in general),
     keep the servo names consistent: (from closest to the block to farthest)
         - Gripper
@@ -100,16 +99,12 @@ public class ArmSystem {
 
     /*
      If the robot is at the bottom of the screen, and X is the block:
-
      XO
      XO  <--- Position west
-
      OO
-     XX  <--- Position south 
-
+     XX  <--- Position south
      OX
      OX  <--- Position east
-
      XX
      OO  <--- Position north
      */
@@ -381,7 +376,6 @@ public class ArmSystem {
             // With cord under tension, lower until switch is depressed.
             direction = Direction.DOWN;
         }
-
         Log.d(TAG,"Calibrating");
         Log.d(TAG, "Direction: " + direction);
         Log.d(TAG, "Switch State: " + limitSwitch.getState());
@@ -393,7 +387,6 @@ public class ArmSystem {
             slider.setDirection(Direction.motorDirection(Direction.UP));
             setSliderHeight(0);
         }
-
          */
     }
 

@@ -28,12 +28,10 @@ public abstract class BaseOpMode extends OpMode {
     protected LightSystem lightSystem;
     protected Vuforia vuforia;
     protected VuforiaTrackable skystone;
-    protected VuforiaTrackable rearPerimeter;
     protected ArmSystem armSystem;
     private boolean stopRequested;
 
     public void init(){
-        stopRequested = false;
         this.msStuckDetectInit = 20000;
         this.msStuckDetectInitLoop = 20000;
         EnumMap<DriveSystem.MotorNames, DcMotor> driveMap = new EnumMap<>(DriveSystem.MotorNames.class);
@@ -49,7 +47,6 @@ public abstract class BaseOpMode extends OpMode {
         latchSystem = new LatchSystem(latchMap);
 
         lightSystem = new LightSystem(hardwareMap.get(DigitalChannel.class, "right_light"), hardwareMap.get(DigitalChannel.class, "left_light"));
-        lightSystem.off();
 
         EnumMap<IntakeSystem.MotorNames, DcMotor> intakeMap = new EnumMap<>(IntakeSystem.MotorNames.class);
         for(IntakeSystem.MotorNames name : IntakeSystem.MotorNames.values()){
@@ -57,19 +54,14 @@ public abstract class BaseOpMode extends OpMode {
         }
         intakeSystem = new IntakeSystem(intakeMap, hardwareMap.get(Servo.class, "BOTTOM_INTAKE"));
 
-        DistanceSensor distanceSensor2;
-        DistanceSensor distanceSensor3;
-        ColorSensor colorSensor;
+        EnumMap<ArmSystem.ServoNames, Servo> servoEnumMap = new EnumMap<>(ArmSystem.ServoNames.class);
 
-        EnumMap<ArmSystem.ServoNames, Servo> servoEnumMap = new EnumMap<ArmSystem.ServoNames, Servo>(ArmSystem.ServoNames.class);
-        servoEnumMap.put(ArmSystem.ServoNames.GRIPPER, hardwareMap.get(Servo.class, "GRIPPER"));
-        servoEnumMap.put(ArmSystem.ServoNames.ELBOW, hardwareMap.get(Servo.class, "ELBOW"));
-        servoEnumMap.put(ArmSystem.ServoNames.WRIST, hardwareMap.get(Servo.class, "WRIST"));
-        servoEnumMap.put(ArmSystem.ServoNames.PIVOT, hardwareMap.get(Servo.class, "PIVOT"));
-        armSystem = new ArmSystem(
-                servoEnumMap,
-                hardwareMap.get(DcMotor.class, "SLIDER_MOTOR"),
-                hardwareMap.get(DigitalChannel.class, "SLIDER_SWITCH"), false);
+        for (ArmSystem.ServoNames name : ArmSystem.ServoNames.values()) {
+            servoEnumMap.put(name, hardwareMap.get(Servo.class, name.toString()));
+        }
+        armSystem = new ArmSystem(servoEnumMap, hardwareMap.get(DcMotor.class, "SLIDER_MOTOR"));
+
+        lightSystem.on();
 
     }
 

@@ -23,13 +23,18 @@ public class DriveSystem {
     }
 
     public static final double SLOW_DRIVE_COEFF = 0.4;
-
-    public int counter = 0;
-    public boolean slowDrive;
-
-
+    // Gives the point at which to switch to less than full power
+    public static final double FULL_POWER_UNTIL = 30;
+    // Minimum speed to complete the turn
+    public static final double MIN_SPEED = 0.22;
+    // 12.6 inches circumference of a wheel
+    // 319 mm circumference of a wheel
+    // 1120 ticks in a revolution
+    // 1120 / 319 = 3.51
+    private final double TICKS_IN_MM = 3.51;
+    public static final double STRAFE_COEFF = 0.09;
     public static final String TAG = "DriveSystem";
-    public static final double P_TURN_COEFF = 0.07;     // Larger is more responsive, but also less stable
+    public static final double P_TURN_COEFF = 0.018;     // Larger is more responsive, but also less stable
     public static final double HEADING_THRESHOLD = 1 ;      // As tight as we can make it with an integer gyro
 
     public EnumMap<MotorNames, DcMotor> motors;
@@ -38,9 +43,7 @@ public class DriveSystem {
 
     private int mTargetTicks;
     private double mTargetHeading;
-
-    // 4 inches
-    private final double TICKS_IN_MM = 1.358267716;
+    public boolean mSlowDrive;
 
     /**
      * Handles the data for the abstract creation of a drive system with four wheels
@@ -63,7 +66,6 @@ public class DriveSystem {
     }
 
     public void initMotors() {
-
         motors.forEach((name, motor) -> {
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -78,15 +80,15 @@ public class DriveSystem {
                     break;
             }
         });
-        setMotorPower(0);
+        // setMotorPower(0);
     }
 
-    public void slowDrive(boolean on) {
-        slowDrive = on;
+    public void slowDrive(boolean slowDrive) {
+        mSlowDrive = slowDrive;
     }
 
     private void setDriveSpeed(DcMotor motor, double motorPower) {
-        motor.setPower(Range.clip(slowDrive ?
+        motor.setPower(Range.clip(mSlowDrive ?
                 SLOW_DRIVE_COEFF * motorPower : motorPower, -1, 1));
     }
 
@@ -96,8 +98,6 @@ public class DriveSystem {
      * @param leftX Left X joystick value
      * @param leftY Left Y joystick value in case you couldn't tell from the others
      */
-
-    // TODO
     public void drive(float rightX, float leftX, float leftY) {
         // Prevent small values from causing the robot to drift
         if (Math.abs(rightX) < 0.01) {
@@ -133,73 +133,86 @@ public class DriveSystem {
                     break;
             }
         });
-        slowDrive = false;
+        mSlowDrive = false;
     }
 
     public boolean driveToPositionTicks(int ticks, Direction direction, double maxPower) {
-        if(mTargetTicks == 0){
-            mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
-            motors.forEach((name, motor) -> {
-                motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                if(Direction.isStrafe(direction)){
-                    int sign = direction == Direction.LEFT ? -1 : 1;
-                    switch(name){
-                        case FRONTLEFT:
-                        case BACKRIGHT:
-                            motor.setTargetPosition(sign * mTargetTicks);
-                            break;
-                        case FRONTRIGHT:
-                        case BACKLEFT:
-                            motor.setTargetPosition(sign * -mTargetTicks);
-                            break;
-                    }
-                } else {
-                    motor.setTargetPosition(mTargetTicks);
-                }
-                motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                motor.setPower(maxPower);
-            });
+        if(mTargetTicks == 0) {
+            driveToPositionInit(ticks, direction, maxPower);
         }
-
         for (DcMotor motor : motors.values()) {
             int offset = Math.abs(motor.getCurrentPosition() - mTargetTicks);
-            if(offset <= 0){
-
+            if(offset <= 15){
                 // Shut down motors
-                setMotorPower(0);
-
-                // Reset motors to default run mode
-                setRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
                 // Reset target
-                mTargetTicks = 0;
-
+                stopAndReset();
                 // Motor has reached target
                 return true;
             }
         }
 
+        if (Direction.isStrafe(direction)) {
+            double diff = computeDegreesDiff();
+            double correction = Range.clip(STRAFE_COEFF * diff, -1, 1);
+            int sign = direction == Direction.LEFT ? -1 : 1;
+            motors.forEach((name, motor) -> {
+                switch(name) {
+                    case FRONTLEFT:
+                    case BACKLEFT:
+                        motor.setPower(correction > 0 ? 1 - sign * correction: 1);
+                        break;
+                    case FRONTRIGHT:
+                    case BACKRIGHT:
+                        motor.setPower(correction < 0 ? 1 + sign * correction : 1);
+                        break;
+                    }
+                });
+        }
         // Motor has not reached target
         return false;
+    }
 
+    private void driveToPositionInit(int ticks, Direction direction, double maxPower) {
+        mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
+        motors.forEach((name, motor) -> {
+            motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            if(Direction.isStrafe(direction)) {
+                strafeInit();
+                int sign = direction == Direction.LEFT ? -1 : 1;
+
+                switch(name){
+                    case FRONTLEFT:
+                    case BACKRIGHT:
+                        motor.setTargetPosition(sign * mTargetTicks);
+                        break;
+                    case FRONTRIGHT:
+                    case BACKLEFT:
+                        motor.setTargetPosition(sign * -mTargetTicks);
+                        break;
+                }
+            } else {
+                motor.setTargetPosition(mTargetTicks);
+            }
+            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            motor.setPower(maxPower);
+        });
+    }
+
+    public void stopAndReset() {
+        setMotorPower(0.0);
+        mTargetTicks = 0;
+        mTargetHeading = 0;
+        setRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    private void strafeInit() {
+        mTargetHeading = imuSystem.getHeading();
     }
 
     public void setRunMode(DcMotor.RunMode runMode) {
         for (DcMotor motor : motors.values()) {
             motor.setMode(runMode);
         }
-    }
-
-    /**
-     * Gets the minimum distance from the target
-     * @return
-     */
-    public int  getMinDistanceFromTarget() {
-        int distance = Integer.MAX_VALUE;
-        for (DcMotor motor : motors.values()) {
-            distance = Math.min(distance, motor.getTargetPosition() - motor.getCurrentPosition());
-        }
-        return distance;
     }
 
     public boolean driveToPosition(int millimeters, Direction direction, double maxPower) {
@@ -209,9 +222,9 @@ public class DriveSystem {
     /**
      * Converts millimeters to ticks
      * @param millimeters Millimeters to convert to ticks
-     * @return
+     * @return number of ticks
      */
-    public int millimetersToTicks(int millimeters) {
+    private int millimetersToTicks(int millimeters) {
         return (int) Math.round(millimeters * TICKS_IN_MM);
     }
 
@@ -220,7 +233,6 @@ public class DriveSystem {
      * @param degrees The degrees to turn the robot by
      * @param maxPower The maximum power of the motors
      */
-    // TODO
     public boolean turnAbsolute(double degrees, double maxPower) {
         // Since it is vertical, use pitch instead of heading
         return turn(diffFromAbs(degrees), maxPower);
@@ -235,7 +247,6 @@ public class DriveSystem {
         // Since controller hub is vertical, use pitch instead of heading
         double heading = imuSystem.getHeading();
         // if controller hub is flat: double heading = imuSystem.getHeading();
-        Log.d(TAG,"Current Heading: " + heading);
         if(mTargetHeading == 0) {
             mTargetHeading = (heading + degrees) % 360;
             Log.d(TAG, "Setting Heading -- Target: " + mTargetHeading);
@@ -244,38 +255,39 @@ public class DriveSystem {
         }
         double difference = mTargetHeading - heading;
         Log.d(TAG,"Difference: " + difference);
-
         return onHeading(maxPower, heading);
 
     }
 
     /**
      * Perform one cycle of closed loop heading control.
-     * @param speed     Desired speed of turn
+     * @param speed Desired speed of turn
      */
     public boolean onHeading(double speed, double heading) {
-        double steer;
         double leftSpeed;
-        double rightSpeed;
 
         // determine turn power based on +/- error
-        double error = getError(heading);
+        double error = computeDegreesDiff();
 
+        // If it gets there: stop
         if (Math.abs(error) <= HEADING_THRESHOLD) {
             mTargetHeading = 0;
             setMotorPower(0);
             return true;
         }
 
-        steer = getSteer(error);
-        leftSpeed  = speed * steer;
-        rightSpeed   = -leftSpeed;
+        // Go full speed until 60% there
+        leftSpeed = Math.abs(error) > FULL_POWER_UNTIL ? speed : (speed * getSteer(error));
+        // leftSpeed = speed * getSteer(error);
 
 
-        Log.d(TAG,"Left Speed:" + leftSpeed);
-        Log.d(TAG, "Right Speed:" + rightSpeed);
+        if (leftSpeed < 0) {
+            leftSpeed = Range.clip(leftSpeed, -1.0, - 1 * MIN_SPEED);
+        } else {
+            leftSpeed = Range.clip(leftSpeed, MIN_SPEED, 1.0);
+        }
         // Send desired speeds to motors.
-        tankDrive(leftSpeed, rightSpeed);
+        tankDrive(leftSpeed, -leftSpeed);
 
         return false;
     }
@@ -286,20 +298,8 @@ public class DriveSystem {
      * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
      *          +ve error means the robot should turn LEFT (CCW) to reduce error.
      */
-    public double getError(double heading) {
-        // calculate error in -179 to +180 range  (
-        double robotError = mTargetHeading - heading;
-        Log.d(TAG,"Robot Error: " + robotError);
-        while (robotError > 180) {
-            robotError -= 360;
-        }
-        while (robotError <= -180) {
-            robotError += 360;
-        }
-        return robotError;
-    }
 
-    public double diffFromAbs(double heading) {
+    private double diffFromAbs(double heading) {
         // calculate error in -179 to +180 range
         // When vertical use pitch instead of heading
         double robotDiff = heading - imuSystem.getHeading();
@@ -318,8 +318,7 @@ public class DriveSystem {
      * @param error   Error angle in robot relative degrees
      * @return
      */
-    // TODO
-    public double getSteer(double error) {
+    private double getSteer(double error) {
         return Range.clip(error *  P_TURN_COEFF, -1, 1);
     }
 
@@ -328,7 +327,7 @@ public class DriveSystem {
      * @param leftPower sets the left side power of the robot
      * @param rightPower sets the right side power of the robot
      */
-    public void tankDrive(double leftPower, double rightPower) {
+    private void tankDrive(double leftPower, double rightPower) {
         motors.forEach((name, motor) -> {
             switch(name) {
                 case FRONTLEFT:
@@ -344,23 +343,13 @@ public class DriveSystem {
     }
 
     /**
-     * Gets the turn power needed
-     * @param degrees Number of degrees to turn
-     * @return motor power from 0 - 0.8
+     * computeDegreesDiff determines the error between the target angle and the robot's current heading
+     * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
+     *          +ve error means the robot should turn LEFT (CCW) to reduce error.
      */
-    private double getTurnPower(double degrees, double maxPower) {
-        // double power = Math.abs(degrees / 100.0);
-        return Range.clip(degrees / 100.0, -maxPower, maxPower);
+    private double computeDegreesDiff() {
+        double diff = mTargetHeading - imuSystem.getHeading();
+        return Math.abs(diff) == 180 ? diff : diff % 180;
     }
 
-    private double computeDegreesDiff(double targetHeading, double heading) {
-        double diff = targetHeading - heading;
-        if (diff > 180) {
-            return diff - 360;
-        }
-        if (diff < -180) {
-            return 360 + diff;
-        }
-        return diff;
-    }
 }
