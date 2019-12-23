@@ -1,9 +1,15 @@
 package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.teamcode.components.ArmSystem;
 import org.firstinspires.ftc.teamcode.components.LatchSystem;
 import org.firstinspires.ftc.teamcode.opmodes.base.BaseOpMode;
+
+import java.util.EnumMap;
 
 @TeleOp(name = "Real Teleop", group="TeleOp")
 public class DriveTeleop extends BaseOpMode {
@@ -12,14 +18,9 @@ public class DriveTeleop extends BaseOpMode {
     private boolean rightLatchHit = false;
 
     private final double SLIDER_SPEED = 1;
-    private boolean xRecentlyHit, m_gripper, m_down, m_up;
-
-    public void loop() {
-
-        telemetry.addData("Current encoder position", armSystem.getSliderPos());
-        telemetry.update();
-
-
+    private boolean gripped, down, up;
+    
+    public void loop(){
         float rx = (float) Math.pow(gamepad1.right_stick_x, 3);
         float lx = (float) Math.pow(gamepad1.left_stick_x, 3);
         float ly = (float) Math.pow(gamepad1.left_stick_y, 3);
@@ -76,25 +77,25 @@ public class DriveTeleop extends BaseOpMode {
             armSystem.moveSouth();
         }
 
-        if (gamepad2.a && !m_gripper) {
+        if (gamepad2.a && !gripped) {
             armSystem.toggleGripper();
-            m_gripper = true;
+            gripped = true;
         } else if (!gamepad2.a) {
-            m_gripper = false;
+            gripped = false;
         }
 
-        if (gamepad2.right_bumper && !m_up) {
+        if (gamepad2.right_bumper && !up) {
             armSystem.setSliderHeight(armSystem.targetHeight + 1);
-            m_up = true;
+            up = true;
         } else if (!gamepad2.right_bumper) {
-            m_up = false;
+            up = false;
         }
 
-        if (gamepad2.left_bumper && !m_down) {
+        if (gamepad2.left_bumper && !down) {
             armSystem.setSliderHeight(armSystem.targetHeight - 1);
-            m_down = true;
+            down = true;
         } else if (!gamepad2.left_bumper) {
-            m_down = false;
+            down = false;
         }
         //telemetry.addData("Target height: ", armSystem);
 
