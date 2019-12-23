@@ -44,19 +44,6 @@ public class ArmSystem {
         GRIPPER, WRIST, ELBOW, PIVOT
     }
 
-    private enum Direction {
-        UP, DOWN;
-        private static Direction reverse(Direction direction){
-            return direction == UP ? DOWN : UP;
-        }
-
-        private static DcMotorSimple.Direction motorDirection(Direction direction){
-            return direction == UP ?
-                    DcMotorSimple.Direction.REVERSE :
-                    DcMotorSimple.Direction.FORWARD;
-        }
-    };
-
     private boolean mHoming;
     private boolean mGettingCapstone;
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
