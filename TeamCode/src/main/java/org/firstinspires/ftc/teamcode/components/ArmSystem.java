@@ -57,7 +57,6 @@ public class ArmSystem {
         }
     };
 
-    private Direction mDirection;
     private boolean mHoming;
     private boolean mGettingCapstone;
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
@@ -67,7 +66,7 @@ public class ArmSystem {
     private DcMotor slider;
 
     // This is in block positions, not ticks
-    public double targetHeight;
+    public double mTargetHeight;
     // These two variables are used for all the auto methods.
     private Deadline mWaiting;
 
@@ -100,7 +99,6 @@ public class ArmSystem {
         servoEnumMap = servos;
         this.slider = slider;
         this.mCalibrationDistance = slider.getCurrentPosition();
-        this.mDirection = Direction.UP;
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         this.mHoming = false;
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
@@ -206,11 +204,11 @@ public class ArmSystem {
     // Pos should be the # of blocks high it should be
     public void setSliderHeight(double pos) {
         if (pos < 0) {
-            targetHeight = 0;
+            mTargetHeight = 0;
         } else if (pos > 5) {
-            targetHeight = 5;
+            mTargetHeight = 5;
         } else {
-            targetHeight = pos;
+            mTargetHeight = pos;
         }
         setPosTarget();
         slider.setDirection(Direction.motorDirection(Direction.UP));
@@ -245,6 +243,6 @@ public class ArmSystem {
     public boolean isGettingCapstone() { return mGettingCapstone; }
 
     private void setPosTarget() {
-        slider.setTargetPosition(calculateHeight(targetHeight));
+        slider.setTargetPosition(calculateHeight(mTargetHeight));
     }
 }
