@@ -56,7 +56,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
     }
 
     private int skystoneOffset;
-    private static final int DEAD_RECKON_SKYSTONE = -30;
+    private static final int DEAD_RECKON_SKYSTONE = -20;
     private double alignStone;
     @Override
     public void loop() {
@@ -86,8 +86,8 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                         if (recognition.getLabel().equalsIgnoreCase("Skystone")) {
                             double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
                             int sign = (int) Math.signum(degrees);
-                            int currOffset = sign * (int) (300 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
-                            currOffset -= 150;
+                            int currOffset = sign * (int) (320 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
+                            currOffset -= 215;
                             // The skystone detected is one of the first three which means that
                             // the second skystone must be farthest from the audience
                             distances.add(currOffset);
@@ -102,7 +102,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                     skystoneOffset = maxDistance;
                     // If the magnitude of the distance is greater than -360 the skystone is the
                     // first one
-                    if (skystoneOffset < -350) {
+                    if (skystoneOffset < -245) {
                         skystoneOffset = DEAD_RECKON_SKYSTONE;
                     }
                 } else {
