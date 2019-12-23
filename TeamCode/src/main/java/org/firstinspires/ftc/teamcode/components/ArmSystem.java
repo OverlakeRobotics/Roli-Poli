@@ -89,7 +89,11 @@ public class ArmSystem {
     private final int WAIT_TIME = 450;
 
     public static final String TAG = "ArmSystem"; // for debugging
+    private boolean gripped;
+    private boolean goUp;
+    private boolean goDown;
 
+    private EnumMap<ServoNames, Servo> servoEnumMap;
     /*
      If the robot is at the bottom of the screen, and X is the block:
 
@@ -234,10 +238,8 @@ public class ArmSystem {
     public void toggleGripper() {
         if (servoEnumMap.get(ServoNames.GRIPPER).getPosition() == GRIPPER_CLOSE) {
             openGripper();
-        } else {
-            closeGripper();
+            m_waiting = true;
         }
-    }
 
     private void movePresetPosition(Position pos){
         double[] posArray = pos.getPos();
