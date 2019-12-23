@@ -34,7 +34,7 @@ public class DriveSystem {
     private final double TICKS_IN_MM = 3.51;
     public static final double STRAFE_COEFF = 0.09;
     public static final String TAG = "DriveSystem";
-    public static final double P_TURN_COEFF = 0.018;     // Larger is more responsive, but also less stable
+    public static final double P_TURN_COEFF = 0.012;     // Larger is more responsive, but also less stable
     public static final double HEADING_THRESHOLD = 1 ;      // As tight as we can make it with an integer gyro
 
     public EnumMap<MotorNames, DcMotor> motors;

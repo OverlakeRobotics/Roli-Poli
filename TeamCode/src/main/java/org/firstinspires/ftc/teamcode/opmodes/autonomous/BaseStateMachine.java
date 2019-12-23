@@ -16,7 +16,6 @@ public abstract class BaseStateMachine extends BaseAutonomous {
         STATE_BACKUP_SLIGHTLY_FROM_WALL,
         STATE_ALIGN_SKYSTONE,
         STATE_ROTATE_ARM,
-        STATE_ROTATE_ARM_FOR_HOME,
         STATE_HORIZONTAL_ALIGN_SKYSTONE,
         STATE_INTAKE_SKYSTONE,
         STATE_ALIGN_STONE,
@@ -57,9 +56,8 @@ public abstract class BaseStateMachine extends BaseAutonomous {
     }
 
     private int skystoneOffset;
-    private static final int DEAD_RECKON_SKYSTONE = -95;
+    private static final int DEAD_RECKON_SKYSTONE = -30;
     private double alignStone;
-    private boolean calledSpit = false;
     @Override
     public void loop() {
         telemetry.addData("State", mCurrentState);
@@ -82,14 +80,14 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_FIND_SKYSTONE:
                 List<Recognition> recognitions = tensorflow.getInference();
-                List<Integer> distances = new ArrayList<Integer>();
+                List<Integer> distances = new ArrayList<>();
                 if (recognitions != null) {
                     for (Recognition recognition : recognitions) {
                         if (recognition.getLabel().equals("Skystone")) {
                             double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
                             int sign = (int) Math.signum(degrees);
                             int currOffset = sign * (int) (300 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
-                            currOffset -= 350;
+                            currOffset -= 150;
                             // The skystone detected is one of the first three which means that
                             // the second skystone must be farthest from the audience
                             distances.add(currOffset);
@@ -104,7 +102,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                     skystoneOffset = maxDistance;
                     // If the magnitude of the distance is greater than -360 the skystone is the
                     // first one
-                    if (skystoneOffset < -390) {
+                    if (skystoneOffset < -350) {
                         skystoneOffset = DEAD_RECKON_SKYSTONE;
                     }
                 } else {
@@ -112,7 +110,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 }
                 // Blue strafing is worse so increase the value slightly
                 if (currentTeam == Team.BLUE) {
-                    skystoneOffset *= 1.1;
+                    skystoneOffset *= 1.05;
                 }
                 newState(State.STATE_ALIGN_SKYSTONE);
                 Log.d(TAG, "Skystone offset: " + skystoneOffset);
@@ -243,7 +241,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 //                    }
 //                }
 //                Log.d(TAG, "Blue: " + colorSensor.blue() + " Red: " + colorSensor.red());
-                if (driveSystem.driveToPosition(1300, outsideDirection, 0.6)) {
+                if (driveSystem.driveToPosition(1100, outsideDirection, 0.6)) {
                     newState(State.STATE_COMPLETE);
                 }
                 break;
