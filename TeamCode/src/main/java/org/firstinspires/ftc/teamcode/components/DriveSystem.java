@@ -23,7 +23,16 @@ public class DriveSystem {
     }
 
     public static final double SLOW_DRIVE_COEFF = 0.4;
-
+    // Gives the point at which to switch to less than full power
+    public static final double FULL_POWER_UNTIL = 30;
+    // Minimum speed to complete the turn
+    public static final double MIN_SPEED = 0.22;
+    // 12.6 inches circumference of a wheel
+    // 319 mm circumference of a wheel
+    // 1120 ticks in a revolution
+    // 1120 / 319 = 3.51
+    private final double TICKS_IN_MM = 3.51;
+    public static final double STRAFE_COEFF = 0.09;
     public static final String TAG = "DriveSystem";
     public static final double P_TURN_COEFF = 0.018;     // Larger is more responsive, but also less stable
     public static final double HEADING_THRESHOLD = 1 ;      // As tight as we can make it with an integer gyro
@@ -36,12 +45,6 @@ public class DriveSystem {
     private double mTargetHeading;
     private boolean mStrafeSet;
     public boolean mSlowDrive;
-
-    // 12.6 inches circumference of a wheel
-    // 319 mm circumference of a wheel
-    // 1120 ticks in a revolution
-    // 1120 / 319 = 3.51
-    private final double TICKS_IN_MM = 3.51;
 
     /**
      * Handles the data for the abstract creation of a drive system with four wheels
@@ -81,8 +84,8 @@ public class DriveSystem {
         setMotorPower(0);
     }
 
-    public void slowDrive(boolean on) {
-        mSlowDrive = on;
+    public void slowDrive(boolean slowDrive) {
+        mSlowDrive = slowDrive;
     }
 
     private void setDriveSpeed(DcMotor motor, double motorPower) {
@@ -134,32 +137,9 @@ public class DriveSystem {
         mSlowDrive = false;
     }
 
-
-    public static final double STRAFE_COEFF = 0.09;
     public boolean driveToPositionTicks(int ticks, Direction direction, double maxPower) {
-        if(mTargetTicks == 0){
-            mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
-            motors.forEach((name, motor) -> {
-                motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                if(Direction.isStrafe(direction)) {
-                    int sign = direction == Direction.LEFT ? -1 : 1;
-                    switch(name){
-                        case FRONTLEFT:
-                        case BACKRIGHT:
-                            motor.setTargetPosition(sign * mTargetTicks);
-                            break;
-                        case FRONTRIGHT:
-                        case BACKLEFT:
-                            motor.setTargetPosition(sign * -mTargetTicks);
-                            break;
-                    }
-                } else {
-                    motor.setTargetPosition(mTargetTicks);
-                }
-                motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                motor.setPower(maxPower);
-            });
-        }
+
+        drivePosInit(ticks, direction, maxPower);
 
         for (DcMotor motor : motors.values()) {
             int offset = Math.abs(motor.getCurrentPosition() - mTargetTicks);
@@ -199,6 +179,32 @@ public class DriveSystem {
         return false;
     }
 
+    public void drivePosInit(int ticks, Direction direction, double maxPower) {
+        if(mTargetTicks == 0){
+            mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
+            motors.forEach((name, motor) -> {
+                motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                if(Direction.isStrafe(direction)) {
+                    int sign = direction == Direction.LEFT ? -1 : 1;
+                    switch(name){
+                        case FRONTLEFT:
+                        case BACKRIGHT:
+                            motor.setTargetPosition(sign * mTargetTicks);
+                            break;
+                        case FRONTRIGHT:
+                        case BACKLEFT:
+                            motor.setTargetPosition(sign * -mTargetTicks);
+                            break;
+                    }
+                } else {
+                    motor.setTargetPosition(mTargetTicks);
+                }
+                motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                motor.setPower(maxPower);
+            });
+        }
+    }
+
     public void stopAndReset() {
         setMotorPower(0.0);
         mTargetTicks = 0;
@@ -226,7 +232,7 @@ public class DriveSystem {
      * @param millimeters Millimeters to convert to ticks
      * @return number of ticks
      */
-    public int millimetersToTicks(int millimeters) {
+    private int millimetersToTicks(int millimeters) {
         return (int) Math.round(millimeters * TICKS_IN_MM);
     }
 
@@ -260,12 +266,6 @@ public class DriveSystem {
         return onHeading(maxPower, heading);
 
     }
-
-    // Gives the point at which to switch to less than full power
-    public static final double FULL_POWER_UNTIL = 30;
-
-    // Minimum speed to complete the turn
-    public static final double MIN_SPEED = 0.22;
 
     /**
      * Perform one cycle of closed loop heading control.
@@ -326,8 +326,7 @@ public class DriveSystem {
      * @param error   Error angle in robot relative degrees
      * @return
      */
-    // TODO
-    public double getSteer(double error) {
+    private double getSteer(double error) {
         return Range.clip(error *  P_TURN_COEFF, -1, 1);
     }
 
@@ -336,7 +335,7 @@ public class DriveSystem {
      * @param leftPower sets the left side power of the robot
      * @param rightPower sets the right side power of the robot
      */
-    public void tankDrive(double leftPower, double rightPower) {
+    private void tankDrive(double leftPower, double rightPower) {
         motors.forEach((name, motor) -> {
             switch(name) {
                 case FRONTLEFT:

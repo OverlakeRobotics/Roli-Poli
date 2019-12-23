@@ -16,10 +16,7 @@ public class DriveTeleop extends BaseOpMode {
 
     public void loop() {
 
-        telemetry.addData("Limit switch", armSystem.switchIsPressed());
         telemetry.addData("Current encoder position", armSystem.getSliderPos());
-        telemetry.addData("Intial position", armSystem.calibrationDistance);
-        telemetry.addData("Target height", armSystem.targetHeight);
         telemetry.update();
 
 
