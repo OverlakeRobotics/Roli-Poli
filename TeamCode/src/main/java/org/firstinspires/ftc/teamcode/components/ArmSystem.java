@@ -3,7 +3,11 @@ package org.firstinspires.ftc.teamcode.components;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import  com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+
 import java.util.EnumMap;
+import java.util.concurrent.TimeUnit;
 
 /*
     This class controls everything related to the arm, including driver assist features.
@@ -65,8 +69,7 @@ public class ArmSystem {
     // This is in block positions, not ticks
     public double targetHeight;
     // These two variables are used for all the auto methods.
-    private int mCount = 0; // Used to wait a bit
-    private boolean mWaiting = false;
+    private Deadline mWaiting;
 
     // This can actually be more, like 5000, but we're not going to stack that high
     // for the first comp and the servo wires aren't long enough yet
@@ -74,6 +77,7 @@ public class ArmSystem {
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
+    private final int WAIT_TIME = 500;
 
     public static final String TAG = "ArmSystem"; // for debugging
 
@@ -99,6 +103,7 @@ public class ArmSystem {
         this.mDirection = Direction.UP;
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         this.mHoming = false;
+        mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
         movePresetPosition(Position.POSITION_HOME);
         openGripper();
     }
@@ -138,19 +143,14 @@ public class ArmSystem {
     // Moves the slider up to one block high, moves the gripper to the home position, and then moves
     // back down so we can fit under the bridge.
     public void autoHome() {
-        if (mWaiting) {
-            mCount++;
-            if (mCount > 30) {
-                mWaiting = false;
-                mCount = 0;
-                mHoming = false;
-                setSliderHeight(0);
-            }
+        if (!mWaiting.hasExpired()) {
+            mHoming = false;
+            setSliderHeight(0);
         }
         if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
             movePresetPosition(Position.POSITION_HOME);
             openGripper();
-            mWaiting = true;
+            mWaiting.reset();
         }
 
         raise(1);
@@ -158,19 +158,14 @@ public class ArmSystem {
 
 
     public void autoCapstone() {
-        if (mWaiting) {
-            mCount++;
-            if (mCount > 30) {
-                mWaiting = false;
-                mCount = 0;
-                mGettingCapstone = false;
-                setSliderHeight(0.5);
-            }
+        if (!mWaiting.hasExpired()) {
+            mGettingCapstone = false;
+            setSliderHeight(0.5);
         }
         if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
             movePresetPosition(Position.POSITION_CAPSTONE);
             openGripper();
-            mWaiting = true;
+            mWaiting.reset();
         }
 
         raise(1);

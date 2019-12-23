@@ -16,6 +16,9 @@ public class DriveTeleop extends BaseOpMode {
 
     private boolean leftLatchHit = false;
     private boolean rightLatchHit = false;
+
+    private final double SLIDER_SPEED = 1;
+    private boolean gripped, down, up;
     
     public void loop(){
         float rx = (float) Math.pow(gamepad1.right_stick_x, 3);
@@ -54,6 +57,49 @@ public class DriveTeleop extends BaseOpMode {
         if (gamepad1.a) {
             latchSystem.bothDown();
         }
+
+        if (armSystem.isHoming()) {
+            armSystem.autoHome();
+        } else if (armSystem.isGettingCapstone()) {
+            armSystem.autoCapstone();
+        } else if (gamepad2.x) {
+            armSystem.moveHome();
+            return;
+        } else if (gamepad2.y) {
+            armSystem.moveCapstone();
+        } else if (gamepad2.dpad_left) {
+            armSystem.moveWest();
+        } else if (gamepad2.dpad_right) {
+            armSystem.moveEast();
+        } else if (gamepad2.dpad_up) {
+            armSystem.moveNorth();
+        } else if (gamepad2.dpad_down) {
+            armSystem.moveSouth();
+        }
+
+        if (gamepad2.a && !gripped) {
+            armSystem.toggleGripper();
+            gripped = true;
+        } else if (!gamepad2.a) {
+            gripped = false;
+        }
+
+        if (gamepad2.right_bumper && !up) {
+            armSystem.setSliderHeight(armSystem.targetHeight + 1);
+            up = true;
+        } else if (!gamepad2.right_bumper) {
+            up = false;
+        }
+
+        if (gamepad2.left_bumper && !down) {
+            armSystem.setSliderHeight(armSystem.targetHeight - 1);
+            down = true;
+        } else if (!gamepad2.left_bumper) {
+            down = false;
+        }
+        //telemetry.addData("Target height: ", armSystem);
+
+        armSystem.raise(SLIDER_SPEED);
 
     }
 }
