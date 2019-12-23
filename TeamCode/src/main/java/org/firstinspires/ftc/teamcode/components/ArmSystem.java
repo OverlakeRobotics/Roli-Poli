@@ -44,8 +44,7 @@ public class ArmSystem {
         GRIPPER, WRIST, ELBOW, PIVOT
     }
 
-    private boolean mHoming;
-    private boolean mGettingCapstone;
+    private boolean mBusy;
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
     public int mCalibrationDistance;
 
@@ -87,7 +86,7 @@ public class ArmSystem {
         this.slider = slider;
         this.mCalibrationDistance = slider.getCurrentPosition();
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.mHoming = false;
+        this.mBusy = false;
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
         movePresetPosition(Position.POSITION_HOME);
         openGripper();
@@ -113,10 +112,10 @@ public class ArmSystem {
 
     // Go to capstone position
     public boolean moveCapstone() {
-        mGettingCapstone = true;
+        mBusy = true;
         setSliderHeight(2);
         if (!mWaiting.hasExpired()) {
-            mGettingCapstone = false;
+            mBusy = false;
             setSliderHeight(0.5);
         }
         if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
@@ -126,17 +125,17 @@ public class ArmSystem {
         }
 
         raise(1);
-        return mGettingCapstone;
+        return mBusy;
     }
 
     // Go to the home position
     // Moves the slider up to one block high, moves the gripper to the home position, and then moves
     // back down so we can fit under the bridge.
     public boolean moveHome() {
-        mHoming = true;
+        mBusy = true;
         setSliderHeight(2);
         if (!mWaiting.hasExpired()) {
-            mHoming = false;
+            mBusy = false;
             setSliderHeight(0);
         }
         if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
@@ -146,7 +145,7 @@ public class ArmSystem {
         }
 
         raise(1);
-        return mHoming;
+        return mBusy;
     }
 
     public void openGripper() {
@@ -216,10 +215,10 @@ public class ArmSystem {
     }
 
     public boolean isHoming() {
-        return mHoming;
+        return mBusy;
     }
 
-    public boolean isGettingCapstone() { return mGettingCapstone; }
+    public boolean isGettingCapstone() { return mBusy; }
 
     private void setPosTarget() {
         slider.setTargetPosition(calculateHeight(mTargetHeight));
