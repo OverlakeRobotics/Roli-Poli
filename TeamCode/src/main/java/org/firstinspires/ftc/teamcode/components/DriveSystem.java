@@ -343,29 +343,13 @@ public class DriveSystem {
     }
 
     /**
-     * Gets the turn power needed
-     * @param degrees Number of degrees to turn
-     * @return motor power from 0 - 0.8
-     */
-    private double getTurnPower(double degrees, double maxPower) {
-        // double power = Math.abs(degrees / 100.0);
-        return Range.clip(degrees / 100.0, -maxPower, maxPower);
-    }
-
-    /**
      * computeDegreesDiff determines the error between the target angle and the robot's current heading
      * @return  error angle: Degrees in the range +/- 180. Centered on the robot's frame of reference
      *          +ve error means the robot should turn LEFT (CCW) to reduce error.
      */
     private double computeDegreesDiff() {
         double diff = mTargetHeading - imuSystem.getHeading();
-        if (diff > 180) {
-            return diff - 360;
-        }
-        if (diff < -180) {
-            return 360 + diff;
-        }
-        return diff;
+        return diff % 180;
     }
 
 }
