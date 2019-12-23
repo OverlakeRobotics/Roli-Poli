@@ -191,7 +191,6 @@ public class ArmSystem {
             mTargetHeight = pos;
         }
         setPosTarget();
-        slider.setDirection(Direction.motorDirection(Direction.UP));
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         raise(1);
     }
