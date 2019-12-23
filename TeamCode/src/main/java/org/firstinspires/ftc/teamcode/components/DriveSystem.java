@@ -137,9 +137,9 @@ public class DriveSystem {
     }
 
     public boolean driveToPositionTicks(int ticks, Direction direction, double maxPower) {
-
-        driveToPositionInit(ticks, direction, maxPower);
-
+        if(mTargetTicks == 0) {
+            driveToPositionInit(ticks, direction, maxPower);
+        }
         for (DcMotor motor : motors.values()) {
             int offset = Math.abs(motor.getCurrentPosition() - mTargetTicks);
             if(offset <= 15){
@@ -173,31 +173,29 @@ public class DriveSystem {
     }
 
     private void driveToPositionInit(int ticks, Direction direction, double maxPower) {
-        if(mTargetTicks == 0){
-            mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
-            motors.forEach((name, motor) -> {
-                motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                if(Direction.isStrafe(direction)) {
-                    strafeInit();
-                    int sign = direction == Direction.LEFT ? -1 : 1;
+        mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
+        motors.forEach((name, motor) -> {
+            motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            if(Direction.isStrafe(direction)) {
+                strafeInit();
+                int sign = direction == Direction.LEFT ? -1 : 1;
 
-                    switch(name){
-                        case FRONTLEFT:
-                        case BACKRIGHT:
-                            motor.setTargetPosition(sign * mTargetTicks);
-                            break;
-                        case FRONTRIGHT:
-                        case BACKLEFT:
-                            motor.setTargetPosition(sign * -mTargetTicks);
-                            break;
-                    }
-                } else {
-                    motor.setTargetPosition(mTargetTicks);
+                switch(name){
+                    case FRONTLEFT:
+                    case BACKRIGHT:
+                        motor.setTargetPosition(sign * mTargetTicks);
+                        break;
+                    case FRONTRIGHT:
+                    case BACKLEFT:
+                        motor.setTargetPosition(sign * -mTargetTicks);
+                        break;
                 }
-                motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                motor.setPower(maxPower);
-            });
-        }
+            } else {
+                motor.setTargetPosition(mTargetTicks);
+            }
+            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            motor.setPower(maxPower);
+        });
     }
 
     public void stopAndReset() {
