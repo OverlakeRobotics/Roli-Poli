@@ -111,10 +111,10 @@ public class ArmSystem {
     }
 
     // Go to capstone position
-    public boolean moveCapstone() {
+    public boolean moveToCapstone() {
         mBusy = true;
         setSliderHeight(2);
-        if (!mWaiting.hasExpired()) {
+        if (mWaiting.hasExpired()) {
             mBusy = false;
             setSliderHeight(0.5);
         } else if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
@@ -132,11 +132,10 @@ public class ArmSystem {
     public boolean moveHome() {
         mBusy = true;
         setSliderHeight(2);
-        if (!mWaiting.hasExpired()) {
+        if (mWaiting.hasExpired()) {
             mBusy = false;
             setSliderHeight(0);
-        }
-        if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
+        } else if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
             movePresetPosition(Position.POSITION_HOME);
             openGripper();
             mWaiting.reset();
@@ -205,7 +204,7 @@ public class ArmSystem {
     // Must be called every loop
     public boolean runSliderToTarget(double speed){
         int targetHeight = calculateHeight(mTargetHeight);
-        if (slider.getCurrentPosition() != targetHeight) {
+        if (getSliderPos() != targetHeight) {
             slider.setPower(speed);
             setPosTarget();
             return false;
