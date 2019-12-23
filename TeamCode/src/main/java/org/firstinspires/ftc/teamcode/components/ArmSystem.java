@@ -243,10 +243,8 @@ public class ArmSystem {
     public void toggleGripper() {
         if (servoEnumMap.get(ServoNames.GRIPPER).getPosition() == GRIPPER_CLOSE) {
             openGripper();
-        } else {
-            closeGripper();
+            m_waiting = true;
         }
-    }
 
     private void movePresetPosition(Position pos){
         double[] posArray = pos.getPos();
