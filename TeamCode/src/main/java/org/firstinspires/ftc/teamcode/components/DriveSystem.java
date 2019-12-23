@@ -43,7 +43,6 @@ public class DriveSystem {
 
     private int mTargetTicks;
     private double mTargetHeading;
-    private boolean mStrafeSet;
     public boolean mSlowDrive;
 
     /**
@@ -81,7 +80,7 @@ public class DriveSystem {
                     break;
             }
         });
-        setMotorPower(0);
+        // setMotorPower(0);
     }
 
     public void slowDrive(boolean slowDrive) {
@@ -139,7 +138,7 @@ public class DriveSystem {
 
     public boolean driveToPositionTicks(int ticks, Direction direction, double maxPower) {
 
-        drivePosInit(ticks, direction, maxPower);
+        driveToPositionInit(ticks, direction, maxPower);
 
         for (DcMotor motor : motors.values()) {
             int offset = Math.abs(motor.getCurrentPosition() - mTargetTicks);
@@ -147,45 +146,41 @@ public class DriveSystem {
                 // Shut down motors
                 // Reset target
                 stopAndReset();
-                // Reset motors to default run mode
-                setRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 // Motor has reached target
                 return true;
             }
         }
 
         if (Direction.isStrafe(direction)) {
-            if (mStrafeSet) {
-                double diff = computeDegreesDiff();
-                double correction = Range.clip(STRAFE_COEFF * diff, -1, 1);
-                int sign = direction == Direction.LEFT ? -1 : 1;
-                motors.forEach((name, motor) -> {
-                    switch(name) {
-                        case FRONTLEFT:
-                        case BACKLEFT:
-                            motor.setPower(correction > 0 ? 1 - sign * correction: 1);
-                            break;
-                        case FRONTRIGHT:
-                        case BACKRIGHT:
-                            motor.setPower(correction < 0 ? 1 + sign * correction : 1);
-                            break;
+            double diff = computeDegreesDiff();
+            double correction = Range.clip(STRAFE_COEFF * diff, -1, 1);
+            int sign = direction == Direction.LEFT ? -1 : 1;
+            motors.forEach((name, motor) -> {
+                switch(name) {
+                    case FRONTLEFT:
+                    case BACKLEFT:
+                        motor.setPower(correction > 0 ? 1 - sign * correction: 1);
+                        break;
+                    case FRONTRIGHT:
+                    case BACKRIGHT:
+                        motor.setPower(correction < 0 ? 1 + sign * correction : 1);
+                        break;
                     }
                 });
-            } else {
-                strafeInit();
-            }
         }
         // Motor has not reached target
         return false;
     }
 
-    public void drivePosInit(int ticks, Direction direction, double maxPower) {
+    private void driveToPositionInit(int ticks, Direction direction, double maxPower) {
         if(mTargetTicks == 0){
             mTargetTicks = direction == Direction.BACKWARD ? -ticks : ticks;
             motors.forEach((name, motor) -> {
                 motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 if(Direction.isStrafe(direction)) {
+                    strafeInit();
                     int sign = direction == Direction.LEFT ? -1 : 1;
+
                     switch(name){
                         case FRONTLEFT:
                         case BACKRIGHT:
@@ -209,12 +204,11 @@ public class DriveSystem {
         setMotorPower(0.0);
         mTargetTicks = 0;
         mTargetHeading = 0;
-        mStrafeSet = false;
+        setRunMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     private void strafeInit() {
         mTargetHeading = imuSystem.getHeading();
-        mStrafeSet = true;
     }
 
     public void setRunMode(DcMotor.RunMode runMode) {
