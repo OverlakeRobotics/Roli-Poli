@@ -197,6 +197,7 @@ public class ArmSystem {
     }
 
     // Pos should be the # of blocks high it should be
+    // MUST BE CALLED before runSliderToTarget
     public void setSliderHeight(double pos) {
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
         if (pos < 0.3 && mQueueing) {
@@ -221,13 +222,12 @@ public class ArmSystem {
     }
 
     // Must be called every loop
-    public boolean runSliderToTarget(double speed){
-        setPosTarget();
-        if (slider.getCurrentPosition() != slider.getTargetPosition()) {
-            slider.setPower(speed);
-            return false;
+    public boolean runSliderToTarget(){
+        if (slider.isBusy()) {
+            return slider.getCurrentPosition() == slider.getTargetPosition();
         } else {
-            return true;
+            slider.setPower(1.0);
+            return false;
         }
     }
 
