@@ -67,8 +67,6 @@ public class ArmSystem {
 
     // This is in block positions, not ticks
     public double mTargetHeight;
-    // Is it queueing?
-    private boolean mQueueing;
     // The queued position
     private double mQueuePos;
     // This variable is used for all the auto methods.
@@ -200,8 +198,7 @@ public class ArmSystem {
     // MUST BE CALLED before runSliderToTarget
     public void setSliderHeight(double pos) {
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
-        if (pos < 0.3 && mQueueing) {
-            mQueueing = false;
+        if (pos < 0.3) {
             incrementQueue();
             if (mQueuePos >= 6) {
                 resetQueue();
@@ -239,11 +236,9 @@ public class ArmSystem {
         slider.setTargetPosition(calculateHeight(mTargetHeight));
     }
 
-    public void setToQueueHeight() {
-        if (!mQueueing) {
-            mQueueing = true;
-        }
+    public boolean runToQueueHeight() {
         setSliderHeight(mQueuePos);
+        return runSliderToTarget();
     }
 
     public void resetQueue() {
@@ -252,6 +247,14 @@ public class ArmSystem {
 
     private void incrementQueue() {
         mQueuePos++;
+    }
+
+    private void decrementQueue() {
+        mQueuePos--;
+    }
+
+    public double getQueue() {
+        return mQueuePos;
     }
 
 }

@@ -88,7 +88,7 @@ public class DriveTeleop extends BaseOpMode {
         }
 
         if (gamepad2.start && !queueUp) {
-            armSystem.setToQueueHeight();
+            armSystem.runToQueueHeight();
             queueUp = true;
         } else if (!gamepad2.start) {
             queueUp = false;
