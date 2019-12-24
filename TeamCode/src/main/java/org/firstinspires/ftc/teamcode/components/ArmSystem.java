@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import  com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import org.firstinspires.ftc.teamcode.opmodes.autonomous.BaseStateMachine;
 
 import java.util.EnumMap;
 import java.util.concurrent.TimeUnit;
@@ -95,6 +96,7 @@ public class ArmSystem {
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
         movePresetPosition(Position.POSITION_HOME);
+        mCurrentState = ArmState.STATE_INITIAL;
         openGripper();
     }
 
@@ -122,14 +124,13 @@ public class ArmSystem {
     }
 
     private boolean moveToPlace(Position position) {
+        if (getSliderPos() > calculateHeight(2)) {
+            mCurrentState = ArmState.STATE_CHANGE_POSITION;
+        }
         switch(mCurrentState){
             case STATE_INITIAL:
-                if (getSliderPos() < calculateHeight(2)) {
-                    setSliderHeight(2);
-                    mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
-                } else {
-                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
-                }
+                setSliderHeight(2);
+                mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
                 break;
             case STATE_CLEAR_CHASSIS:
                 if(runSliderToTarget(1)){
