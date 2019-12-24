@@ -126,8 +126,10 @@ public class ArmSystem {
             case STATE_INITIAL:
                 if (getSliderPos() < calculateHeight(2)) {
                     setSliderHeight(2);
-                } 
-                mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
+                    mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
+                } else {
+                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                }
                 break;
             case STATE_CLEAR_CHASSIS:
                 if(runSliderToTarget(1)){
