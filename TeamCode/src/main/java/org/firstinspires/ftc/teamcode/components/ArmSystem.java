@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class ArmSystem {
     public enum Position {
         // Double values ordered Pivot, elbow, wrist.
-        POSITION_HOME(new double[] {0.98, 0.17, 0.79}),
+        POSITION_HOME(new double[] {0.96, 0.15, 0.79}),
         POSITION_WEST(new double[] {0.16, 0.22, 0.72}),
         POSITION_SOUTH(new double[] {0.16, 0.22, 0.37}),
         POSITION_EAST(new double[] {0.16, 0.58, 0.37}),
@@ -62,7 +62,7 @@ public class ArmSystem {
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
-    private final int WAIT_TIME = 500;
+    private final int WAIT_TIME = 1000;
 
     public static final String TAG = "ArmSystem"; // for debugging
 
@@ -114,14 +114,16 @@ public class ArmSystem {
     public boolean moveCapstone() {
         mBusy = true;
         setSliderHeight(2);
-        if (!mWaiting.hasExpired()) {
+        if (mWaiting.hasExpired()) {
             mBusy = false;
             setSliderHeight(0.5);
-        } else if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
+        }
+        if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
             movePresetPosition(Position.POSITION_CAPSTONE);
             openGripper();
             mWaiting.reset();
         }
+
         runSliderToTarget(1);
         return mBusy;
     }
