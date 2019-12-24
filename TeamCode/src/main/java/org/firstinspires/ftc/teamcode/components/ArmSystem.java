@@ -23,22 +23,25 @@ import java.util.concurrent.TimeUnit;
 public class ArmSystem {
     public enum Position {
         // Double values ordered Pivot, elbow, wrist.
-        POSITION_HOME(new double[] {0.96, 0.15, 0.79}),
-        POSITION_WEST(new double[] {0.16, 0.22, 0.72}),
-        POSITION_SOUTH(new double[] {0.16, 0.22, 0.37}),
-        POSITION_EAST(new double[] {0.16, 0.58, 0.37}),
-        POSITION_NORTH(new double[] {0.16, 0.58, 0.05}),
-        POSITION_CAPSTONE(new double[] {0.56, 0.23, 0.82});
+        POSITION_HOME(new double[] {0.96, 0.15, 0.79}, 0),
+        POSITION_WEST(new double[] {0.16, 0.22, 0.72}, 0),
+        POSITION_SOUTH(new double[] {0.16, 0.22, 0.37}, 0),
+        POSITION_EAST(new double[] {0.16, 0.58, 0.37}, 0),
+        POSITION_NORTH(new double[] {0.16, 0.58, 0.05}, 0),
+        POSITION_CAPSTONE(new double[] {0.56, 0.23, 0.82}, 0.5);
 
         private double[] posArr;
+        private double height;
 
-        Position(double[] positions) {
+        Position(double[] positions, double height) {
             posArr = positions;
+            this.height = height;
         }
 
         private double[] getPos() {
             return this.posArr;
         }
+        private double getHeight() {return this.height; }
     }
 
     public enum ServoNames {
@@ -124,13 +127,14 @@ public class ArmSystem {
     }
 
     private boolean moveToPlace(Position position) {
-        if (getSliderPos() >= calculateHeight(2)) {
-            mCurrentState = ArmState.STATE_CHANGE_POSITION;
-        }
         switch(mCurrentState){
             case STATE_INITIAL:
-                setSliderHeight(2);
-                mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
+                if (getSliderPos() < calculateHeight(2)) {
+                    setSliderHeight(2);
+                    mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
+                } else {
+                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                }
                 break;
             case STATE_CLEAR_CHASSIS:
                 if(runSliderToTarget(1)){
@@ -142,7 +146,7 @@ public class ArmSystem {
                 movePresetPosition(position);
                 openGripper();
                 if(mWaiting.hasExpired()){
-                    setSliderHeight(position == Position.POSITION_CAPSTONE ? 0.5 : 0);
+                    setSliderHeight(position.getHeight());
                     mCurrentState = ArmState.STATE_SETTLE;
                 }
                 break;
