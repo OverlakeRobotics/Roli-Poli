@@ -198,12 +198,6 @@ public class ArmSystem {
     // MUST BE CALLED before runSliderToTarget
     public void setSliderHeight(double pos) {
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
-        if (pos < 0.3) {
-            incrementQueue();
-            if (mQueuePos >= 6) {
-                resetQueue();
-            }
-        }
         setPosTarget();
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
@@ -238,19 +232,26 @@ public class ArmSystem {
 
     public boolean runToQueueHeight() {
         setSliderHeight(mQueuePos);
-        return runSliderToTarget();
+        boolean complete = runSliderToTarget();
+        if (complete) {
+            incrementQueue();
+        }
+        return complete;
     }
 
     public void resetQueue() {
-        mQueuePos = -1.0;
+        mQueuePos = 0;
     }
 
-    private void incrementQueue() {
+    public void incrementQueue() {
         mQueuePos++;
+        if (mQueuePos > MAX_HEIGHT) {
+            resetQueue();
+        }
     }
 
-    private void decrementQueue() {
-        mQueuePos--;
+    public void decrementQueue() {
+        mQueuePos = Math.max(0, mQueuePos + 1);
     }
 
     public double getQueue() {
