@@ -73,7 +73,7 @@ public class ArmSystem {
     private Deadline mWaiting;
     private boolean mQueuing;
     private boolean mHoming;
-    private boolean mCapstone;
+    private boolean mCapstoning;
 
     private final int MAX_HEIGHT = 7;
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
@@ -136,7 +136,7 @@ public class ArmSystem {
     private boolean moveToPosition(Position position) {
         switch(mCurrentState){
             case STATE_INITIAL:
-                boolean inProgress = (position == Position.POSITION_CAPSTONE) ? (mCapstone = true) : (mHoming = true);
+                boolean inProgress = (position == Position.POSITION_CAPSTONE) ? (mCapstoning = true) : (mHoming = true);
                 if (getSliderPos() < calculateHeight(2)) {
                     setSliderHeight(2);
                     mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
@@ -161,7 +161,7 @@ public class ArmSystem {
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
-                    boolean busy = (position == Position.POSITION_CAPSTONE) ? (mCapstone = false) : (mHoming = false);
+                    boolean busy = (position == Position.POSITION_CAPSTONE) ? (mCapstoning = false) : (mHoming = false);
                     return true;
                 }
                 break;
@@ -272,7 +272,7 @@ public class ArmSystem {
         return mQueuing;
     }
     public boolean isCapstoning() {
-        return mCapstone;
+        return mCapstoning;
     }
 
 }
