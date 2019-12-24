@@ -71,6 +71,9 @@ public class ArmSystem {
     private double mQueuePos;
     // This variable is used for all the auto methods.
     private Deadline mWaiting;
+    private boolean mQueuing;
+    private boolean mHoming;
+    private boolean mCapstone;
 
     private final int MAX_HEIGHT = 7;
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
@@ -133,6 +136,7 @@ public class ArmSystem {
     private boolean moveToPosition(Position position) {
         switch(mCurrentState){
             case STATE_INITIAL:
+                boolean inProgress = (position == Position.POSITION_CAPSTONE) ? (mCapstone = true) : (mHoming = true);
                 if (getSliderPos() < calculateHeight(2)) {
                     setSliderHeight(2);
                     mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
@@ -157,6 +161,7 @@ public class ArmSystem {
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
+                    boolean busy = (position == Position.POSITION_CAPSTONE) ? (mCapstone = false) : (mHoming = false);
                     return true;
                 }
                 break;
@@ -231,10 +236,12 @@ public class ArmSystem {
     }
 
     public boolean runToQueueHeight() {
+        mQueuing = true;
         setSliderHeight(mQueuePos);
         boolean complete = runSliderToTarget();
         if (complete) {
             incrementQueue();
+            mQueuing = false;
         }
         return complete;
     }
@@ -256,6 +263,16 @@ public class ArmSystem {
 
     public double getQueue() {
         return mQueuePos;
+    }
+
+    public boolean isHoming() {
+        return mHoming;
+    }
+    public boolean isQueuing() {
+        return mQueuing;
+    }
+    public boolean isCapstoning() {
+        return mCapstone;
     }
 
 }
