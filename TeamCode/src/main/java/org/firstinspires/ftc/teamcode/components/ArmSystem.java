@@ -1,11 +1,10 @@
 package org.firstinspires.ftc.teamcode.components;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import  com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
-import org.firstinspires.ftc.teamcode.opmodes.autonomous.BaseStateMachine;
 
 import java.util.EnumMap;
 import java.util.concurrent.TimeUnit;
@@ -181,20 +180,11 @@ public class ArmSystem {
     }
 
     public void toggleGripper() {
-        double gripPos = servoEnumMap.get(ServoNames.GRIPPER).getPosition();
-        if (Math.abs(gripPos - GRIPPER_CLOSE) < Math.abs(gripPos - GRIPPER_OPEN)) {
-            // If we're in here, the gripper is closer to its closed position
+        if (servoEnumMap.get(ServoNames.GRIPPER).getPosition() == GRIPPER_CLOSE) {
             openGripper();
         } else {
             closeGripper();
         }
-    }
-
-    private void placeStone() {
-        openGripper();
-        setSliderHeight(getSliderPos() + 1);
-        movePresetPosition(Position.POSITION_HOME);
-        moveToHome();
     }
 
     private void movePresetPosition(Position pos){
@@ -206,16 +196,9 @@ public class ArmSystem {
 
     // Pos should be the # of blocks high it should be
     public void setSliderHeight(double pos) {
-        if (pos < 0) {
-            mTargetHeight = 0;
-        } else if (pos > 5) {
-            mTargetHeight = 5;
-        } else {
-            mTargetHeight = pos;
-        }
+        mTargetHeight = Range.clip(pos, 0, 5);
         setPosTarget();
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        runSliderToTarget(1);
     }
 
     public void setSliderHeight(int pos) {
