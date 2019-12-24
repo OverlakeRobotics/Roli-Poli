@@ -124,7 +124,7 @@ public class ArmSystem {
     }
 
     private boolean moveToPlace(Position position) {
-        if (getSliderPos() > calculateHeight(2)) {
+        if (getSliderPos() >= calculateHeight(2)) {
             mCurrentState = ArmState.STATE_CHANGE_POSITION;
         }
         switch(mCurrentState){
