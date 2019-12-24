@@ -60,7 +60,7 @@ public class ArmSystem {
     private ArmState mCurrentState;
 
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
-    public int mCalibrationDistance;
+    private int mCalibrationDistance;
 
     private EnumMap<ServoNames, Servo> servoEnumMap;
     private DcMotor slider;
@@ -70,9 +70,7 @@ public class ArmSystem {
     // These two variables are used for all the auto methods.
     private Deadline mWaiting;
 
-    // This can actually be more, like 5000, but we're not going to stack that high
-    // for the first comp and the servo wires aren't long enough yet
-    private final int MAX_HEIGHT = calculateHeight(9);
+    private final int MAX_HEIGHT = 7;
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
@@ -196,7 +194,7 @@ public class ArmSystem {
 
     // Pos should be the # of blocks high it should be
     public void setSliderHeight(double pos) {
-        mTargetHeight = Range.clip(pos, 0, 5);
+        mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
         setPosTarget();
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
@@ -213,10 +211,9 @@ public class ArmSystem {
 
     // Must be called every loop
     public boolean runSliderToTarget(double speed){
-        int targetHeight = calculateHeight(mTargetHeight);
-        if (slider.getCurrentPosition() != targetHeight) {
+        setPosTarget();
+        if (slider.getCurrentPosition() != slider.getTargetPosition()) {
             slider.setPower(speed);
-            setPosTarget();
             return false;
         } else {
             return true;
