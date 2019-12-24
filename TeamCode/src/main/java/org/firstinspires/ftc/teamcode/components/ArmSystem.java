@@ -143,7 +143,7 @@ public class ArmSystem {
                 }
                 break;
             case STATE_CLEAR_CHASSIS:
-                if(runSliderToTarget(1)){
+                if(runSliderToTarget()){
                     mCurrentState = ArmState.STATE_CHANGE_POSITION;
                     mWaiting.reset();
                 }
@@ -157,7 +157,7 @@ public class ArmSystem {
                 }
                 break;
             case STATE_SETTLE:
-                if (runSliderToTarget(1)) {
+                if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
                     return true;
                 }

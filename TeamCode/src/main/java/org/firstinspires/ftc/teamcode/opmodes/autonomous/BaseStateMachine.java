@@ -128,7 +128,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_HORIZONTAL_ALIGN_SKYSTONE:
-                armSystem.runSliderToTarget(1.0);
+                armSystem.runSliderToTarget();
                 if (currentTeam == Team.BLUE) {
                     if (driveSystem.driveToPosition(1100, centerDirection, 0.7)) {
                         newState(State.STATE_INTAKE_SKYSTONE);
@@ -141,7 +141,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_INTAKE_SKYSTONE:
-                armSystem.runSliderToTarget(1.0);
+                armSystem.runSliderToTarget();
                 intakeSystem.suck();
                 if (driveSystem.driveToPosition(200, DriveSystem.Direction.FORWARD, 0.2)) {
                     newState(State.STATE_ALIGN_BRIDGE);
@@ -149,7 +149,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_ALIGN_BRIDGE:
-                armSystem.runSliderToTarget(1.0);
+                armSystem.runSliderToTarget();
                 intakeSystem.suck();
                 if (driveSystem.driveToPosition(625, outsideDirection, 1.0)) {
                     armSystem.setSliderHeight(0.0);
@@ -158,7 +158,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_REALIGN_HEADING:
-                armSystem.runSliderToTarget(1.0);
+                armSystem.runSliderToTarget();
                 intakeSystem.suck();
                 if (driveSystem.turnAbsolute(0, 1.0)) {
                     intakeSystem.stop();
@@ -189,7 +189,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_RAISE_ARM:
-                armSystem.runSliderToTarget(1.0);
+                armSystem.runSliderToTarget();
                 if (mStateTime.milliseconds() > 500) {
                     armSystem.moveNorth();
                     newState(State.STATE_ROTATE_ARM);
@@ -197,7 +197,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_ROTATE_ARM:
-                armSystem.runSliderToTarget(1.0);
+                armSystem.runSliderToTarget();
                 if (mStateTime.milliseconds() > 500) {
                     armSystem.setSliderHeight(0.0);
                     newState(State.STATE_MOVE_INTO_WALL);
@@ -205,7 +205,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_MOVE_INTO_WALL:
-                armSystem.runSliderToTarget(1.0);
+                armSystem.runSliderToTarget();
                 if (driveSystem.driveToPosition(700, DriveSystem.Direction.FORWARD, 0.75)) {
                     armSystem.openGripper();
                     latchSystem.bothUp();

@@ -103,7 +103,7 @@ public class DriveTeleop extends BaseOpMode {
         }
         //telemetry.addData("Target height: ", armSystem);
 
-        armSystem.runSliderToTarget(SLIDER_SPEED);
+        armSystem.runSliderToTarget();
 
     }
 }
