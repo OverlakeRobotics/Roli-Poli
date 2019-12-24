@@ -115,22 +115,42 @@ public class ArmSystem {
         return moveToPlace(Position.POSITION_CAPSTONE);
     }
 
+    public enum ArmState {
+        STATE_INITIAL,
+        STATE_CLEAR_CHASSIS,
+        STATE_CHANGE_POSITION,
+        STATE_SETTLE,
+
+    }
+    private ArmState mCurrentState;
     private boolean moveToPlace(Position position) {
-        mBusy = true;
-        setSliderHeight(2);
-        if (mWaiting.hasExpired()) {
-            mBusy = false;
-            setSliderHeight(position.equals(Position.POSITION_CAPSTONE)? 0.5 : 0);
+        switch(mCurrentState){
+            case STATE_INITIAL:
+                setSliderHeight(2);
+                mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
+                break;
+            case STATE_CLEAR_CHASSIS:
+                if(runSliderToTarget(1)){
+                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                    mWaiting.reset();
+                }
+                break;
+            case STATE_CHANGE_POSITION:
+                movePresetPosition(position);
+                openGripper();
+                if(mWaiting.hasExpired()){
+                    setSliderHeight(position.equals(Position.POSITION_CAPSTONE)? 0.5 : 0);
+                    mCurrentState = ArmState.STATE_SETTLE;
+                }
+                break;
+            case STATE_SETTLE:
+                if (runSliderToTarget(1)) {
+                    mCurrentState = ArmState.STATE_INITIAL;
+                    return true;
+                }
+                break;
         }
-
-        if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
-            movePresetPosition(position);
-            openGripper();
-            mWaiting.reset();
-        }
-
-        runSliderToTarget(1);
-        return mBusy;
+        return false;
     }
 
     // Go to the home position
