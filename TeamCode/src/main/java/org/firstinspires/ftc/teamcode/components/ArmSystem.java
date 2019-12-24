@@ -251,7 +251,7 @@ public class ArmSystem {
     }
 
     public void decrementQueue() {
-        mQueuePos = Math.max(0, mQueuePos + 1);
+        mQueuePos = Math.max(0, mQueuePos - 1);
     }
 
     public double getQueue() {
