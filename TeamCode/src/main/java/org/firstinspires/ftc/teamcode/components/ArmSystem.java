@@ -111,15 +111,20 @@ public class ArmSystem {
     }
 
     // Go to capstone position
-    public boolean moveCapstone() {
+    public boolean moveToCapstone() {
+        return moveToPlace(Position.POSITION_CAPSTONE);
+    }
+
+    private boolean moveToPlace(Position position) {
         mBusy = true;
         setSliderHeight(2);
         if (mWaiting.hasExpired()) {
             mBusy = false;
-            setSliderHeight(0.5);
+            setSliderHeight(position.equals(Position.POSITION_CAPSTONE)? 0.5 : 0);
         }
+
         if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
-            movePresetPosition(Position.POSITION_CAPSTONE);
+            movePresetPosition(position);
             openGripper();
             mWaiting.reset();
         }
@@ -131,21 +136,8 @@ public class ArmSystem {
     // Go to the home position
     // Moves the slider up to one block high, moves the gripper to the home position, and then moves
     // back down so we can fit under the bridge.
-    public boolean moveHome() {
-        mBusy = true;
-        setSliderHeight(2);
-        if (!mWaiting.hasExpired()) {
-            mBusy = false;
-            setSliderHeight(0);
-        }
-        if (Math.abs(getSliderPos() - calculateHeight(2)) < 50) {
-            movePresetPosition(Position.POSITION_HOME);
-            openGripper();
-            mWaiting.reset();
-        }
-
-        runSliderToTarget(1);
-        return mBusy;
+    public boolean moveToHome() {
+        return moveToPlace(Position.POSITION_HOME);
     }
 
     public void openGripper() {
@@ -170,7 +162,7 @@ public class ArmSystem {
         openGripper();
         setSliderHeight(getSliderPos() + 1);
         movePresetPosition(Position.POSITION_HOME);
-        moveHome();
+        moveToHome();
     }
 
     private void movePresetPosition(Position pos){
