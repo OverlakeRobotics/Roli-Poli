@@ -43,8 +43,15 @@ public class ArmSystem {
     public enum ServoNames {
         GRIPPER, WRIST, ELBOW, PIVOT
     }
+    public enum ArmState {
+        STATE_INITIAL,
+        STATE_CLEAR_CHASSIS,
+        STATE_CHANGE_POSITION,
+        STATE_SETTLE,
+    }
 
-    private boolean mBusy;
+    private ArmState mCurrentState;
+
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
     public int mCalibrationDistance;
 
@@ -86,7 +93,6 @@ public class ArmSystem {
         this.slider = slider;
         this.mCalibrationDistance = slider.getCurrentPosition();
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        this.mBusy = false;
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
         movePresetPosition(Position.POSITION_HOME);
         openGripper();
@@ -115,14 +121,6 @@ public class ArmSystem {
         return moveToPlace(Position.POSITION_CAPSTONE);
     }
 
-    public enum ArmState {
-        STATE_INITIAL,
-        STATE_CLEAR_CHASSIS,
-        STATE_CHANGE_POSITION,
-        STATE_SETTLE,
-
-    }
-    private ArmState mCurrentState;
     private boolean moveToPlace(Position position) {
         switch(mCurrentState){
             case STATE_INITIAL:
@@ -231,12 +229,6 @@ public class ArmSystem {
     public int getSliderPos() {
         return slider.getCurrentPosition();
     }
-
-    public boolean isHoming() {
-        return mBusy;
-    }
-
-    public boolean isGettingCapstone() { return mBusy; }
 
     private void setPosTarget() {
         slider.setTargetPosition(calculateHeight(mTargetHeight));

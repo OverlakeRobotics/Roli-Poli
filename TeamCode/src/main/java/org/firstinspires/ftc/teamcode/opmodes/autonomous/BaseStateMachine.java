@@ -215,9 +215,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_RAISE_ARM_FOR_HOME:
-                if (armSystem.isHoming()) {
-                    armSystem.moveToHome();
-                } else {
+                if (armSystem.moveToHome()) {
                     newState(State.STATE_PARK_AT_LINE);
                 }
                 break;
@@ -249,10 +247,8 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_STRAFE_AWAY_FROM_FOUNDATION:
-                if (armSystem.isHoming()) {
-                    armSystem.moveToHome();
-                }
-                if (driveSystem.driveToPosition(500, outsideDirection, 1.0)) {
+                if (armSystem.moveToHome() &&
+                        driveSystem.driveToPosition(500, outsideDirection, 1.0)) {
                     newState(State.STATE_TURN_FOR_BACKUP);
                 }
                 break;

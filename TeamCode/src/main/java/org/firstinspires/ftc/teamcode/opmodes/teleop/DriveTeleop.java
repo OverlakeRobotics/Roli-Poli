@@ -52,15 +52,17 @@ public class DriveTeleop extends BaseOpMode {
             latchSystem.bothDown();
         }
 
-        if (armSystem.isHoming()) {
-            armSystem.moveToHome();
-        } else if (armSystem.isGettingCapstone()) {
-            armSystem.moveToCapstone();
-        } else if (gamepad2.x) {
-            armSystem.moveToHome();
+
+        if (gamepad2.x) {
+            while (armSystem.moveToHome()) {
+                armSystem.moveToHome();
+            }
             return;
         } else if (gamepad2.y) {
-            armSystem.moveToCapstone();
+            while (armSystem.moveToCapstone()) {
+                armSystem.moveToCapstone();
+            }
+            return;
         } else if (gamepad2.dpad_left) {
             armSystem.moveWest();
         } else if (gamepad2.dpad_right) {
