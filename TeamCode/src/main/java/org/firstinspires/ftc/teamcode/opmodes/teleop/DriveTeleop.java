@@ -12,7 +12,7 @@ public class DriveTeleop extends BaseOpMode {
     private boolean rightLatchHit = false;
 
     private final double SLIDER_SPEED = 1;
-    private boolean gripped, down, up;
+    private boolean gripped, down, up, queueUp;
     
     public void loop(){
         float rx = (float) Math.pow(gamepad1.right_stick_x, 3);
@@ -86,6 +86,14 @@ public class DriveTeleop extends BaseOpMode {
         } else if (!gamepad2.right_bumper) {
             up = false;
         }
+
+        if (gamepad2.start && !queueUp) {
+            armSystem.setToQueueHeight();
+            queueUp = true;
+        } else if (!gamepad2.start) {
+            queueUp = false;
+        }
+
 
         if (gamepad2.left_bumper && !down) {
             armSystem.setSliderHeight(armSystem.mTargetHeight - 1);

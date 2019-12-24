@@ -67,7 +67,11 @@ public class ArmSystem {
 
     // This is in block positions, not ticks
     public double mTargetHeight;
-    // These two variables are used for all the auto methods.
+    // Is it queueing?
+    private boolean mQueueing;
+    // The queued position
+    private double mQueuePos;
+    // This variable is used for all the auto methods.
     private Deadline mWaiting;
 
     private final int MAX_HEIGHT = 7;
@@ -195,6 +199,13 @@ public class ArmSystem {
     // Pos should be the # of blocks high it should be
     public void setSliderHeight(double pos) {
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
+        if (pos < 0.3 && mQueueing) {
+            mQueueing = false;
+            incrementQueue();
+            if (mQueuePos >= 6) {
+                resetQueue();
+            }
+        }
         setPosTarget();
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
@@ -227,4 +238,20 @@ public class ArmSystem {
     private void setPosTarget() {
         slider.setTargetPosition(calculateHeight(mTargetHeight));
     }
+
+    public void setToQueueHeight() {
+        if (!mQueueing) {
+            mQueueing = true;
+        }
+        setSliderHeight(mQueuePos);
+    }
+
+    public void resetQueue() {
+        mQueuePos = -1.0;
+    }
+
+    private void incrementQueue() {
+        mQueuePos++;
+    }
+
 }
