@@ -124,7 +124,9 @@ public class ArmSystem {
     private boolean moveToPlace(Position position) {
         switch(mCurrentState){
             case STATE_INITIAL:
-                setSliderHeight(2);
+                if (getSliderPos() < calculateHeight(2)) {
+                    setSliderHeight(2);
+                } 
                 mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
                 break;
             case STATE_CLEAR_CHASSIS:
@@ -137,7 +139,7 @@ public class ArmSystem {
                 movePresetPosition(position);
                 openGripper();
                 if(mWaiting.hasExpired()){
-                    setSliderHeight(position.equals(Position.POSITION_CAPSTONE)? 0.5 : 0);
+                    setSliderHeight(position == Position.POSITION_CAPSTONE ? 0.5 : 0);
                     mCurrentState = ArmState.STATE_SETTLE;
                 }
                 break;
