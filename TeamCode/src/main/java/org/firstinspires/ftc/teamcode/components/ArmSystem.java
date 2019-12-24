@@ -24,10 +24,10 @@ public class ArmSystem {
     public enum Position {
         // Double values ordered Pivot, elbow, wrist.
         POSITION_HOME(new double[] {0.96, 0.15, 0.79}, 0),
-        POSITION_WEST(new double[] {0.16, 0.22, 0.72}, 0),
-        POSITION_SOUTH(new double[] {0.16, 0.22, 0.37}, 0),
-        POSITION_EAST(new double[] {0.16, 0.58, 0.37}, 0),
-        POSITION_NORTH(new double[] {0.16, 0.58, 0.05}, 0),
+        POSITION_WEST(new double[] {0.16, 0.22, 0.72}),
+        POSITION_SOUTH(new double[] {0.16, 0.22, 0.37}),
+        POSITION_EAST(new double[] {0.16, 0.58, 0.37}),
+        POSITION_NORTH(new double[] {0.16, 0.58, 0.05}),
         POSITION_CAPSTONE(new double[] {0.56, 0.23, 0.82}, 0.5);
 
         private double[] posArr;
@@ -36,6 +36,10 @@ public class ArmSystem {
         Position(double[] positions, double height) {
             posArr = positions;
             this.height = height;
+        }
+
+        Position(double[] positions) {
+            posArr = positions;
         }
 
         private double[] getPos() {
@@ -123,10 +127,11 @@ public class ArmSystem {
 
     // Go to capstone position
     public boolean moveToCapstone() {
-        return moveToPlace(Position.POSITION_CAPSTONE);
+        return moveToPosition(Position.POSITION_CAPSTONE);
     }
 
-    private boolean moveToPlace(Position position) {
+    // Helper method for going to capstone or home
+    private boolean moveToPosition(Position position) {
         switch(mCurrentState){
             case STATE_INITIAL:
                 if (getSliderPos() < calculateHeight(2)) {
@@ -164,7 +169,7 @@ public class ArmSystem {
     // Moves the slider up to one block high, moves the gripper to the home position, and then moves
     // back down so we can fit under the bridge.
     public boolean moveToHome() {
-        return moveToPlace(Position.POSITION_HOME);
+        return moveToPosition(Position.POSITION_HOME);
     }
 
     public void openGripper() {
