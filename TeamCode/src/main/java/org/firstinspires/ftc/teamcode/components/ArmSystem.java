@@ -136,7 +136,6 @@ public class ArmSystem {
     private boolean moveToPosition(Position position) {
         switch(mCurrentState){
             case STATE_INITIAL:
-                boolean inProgress = (position == Position.POSITION_CAPSTONE) ? (mCapstoning = true) : (mHoming = true);
                 if (getSliderPos() < calculateHeight(2)) {
                     setSliderHeight(2);
                     mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
@@ -161,7 +160,6 @@ public class ArmSystem {
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
-                    boolean busy = (position == Position.POSITION_CAPSTONE) ? (mCapstoning = false) : (mHoming = false);
                     return true;
                 }
                 break;
@@ -236,12 +234,10 @@ public class ArmSystem {
     }
 
     public boolean runToQueueHeight() {
-        mQueuing = true;
         setSliderHeight(mQueuePos);
         boolean complete = runSliderToTarget();
         if (complete) {
             incrementQueue();
-            mQueuing = false;
         }
         return complete;
     }
@@ -273,6 +269,16 @@ public class ArmSystem {
     }
     public boolean isCapstoning() {
         return mCapstoning;
+    }
+
+    public void setHoming(boolean isHoming) {
+        mHoming = isHoming;
+    }
+    public void setQueuing(boolean isQueuing) {
+        mQueuing = isQueuing;
+    }
+    public void setCapstoning(boolean isCapstoning) {
+        mCapstoning = isCapstoning;
     }
 
 }

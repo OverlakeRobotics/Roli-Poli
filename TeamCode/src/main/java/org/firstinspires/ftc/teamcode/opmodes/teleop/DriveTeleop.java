@@ -54,18 +54,18 @@ public class DriveTeleop extends BaseOpMode {
 
 
         if (armSystem.isHoming()) {
-            armSystem.moveToHome();
+            armSystem.setHoming(armSystem.moveToHome());
             return;
         } else if (armSystem.isCapstoning()) {
-            armSystem.moveToCapstone();
+            armSystem.setCapstoning(armSystem.moveToCapstone());
             return;
         } else if (armSystem.isQueuing()) {
-            armSystem.runToQueueHeight();
+            armSystem.setQueuing(armSystem.runToQueueHeight());
         } else if (gamepad2.x) {
-            armSystem.moveToHome();
+            armSystem.setHoming(armSystem.moveToHome());
             return;
         } else if (gamepad2.y) {
-            armSystem.moveToCapstone();
+            armSystem.setCapstoning(armSystem.moveToCapstone());
             return;
         } else if (gamepad2.dpad_left) {
             armSystem.moveWest();
@@ -92,7 +92,7 @@ public class DriveTeleop extends BaseOpMode {
         }
 
         if (gamepad2.start && !queueUp) {
-            armSystem.runToQueueHeight();
+            armSystem.setQueuing(armSystem.runToQueueHeight());
             queueUp = true;
         } else if (!gamepad2.start) {
             queueUp = false;
