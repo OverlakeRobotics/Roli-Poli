@@ -55,7 +55,6 @@ public class ArmSystem {
         STATE_CLEAR_CHASSIS,
         STATE_CHANGE_POSITION,
         STATE_SETTLE,
-        STATE_SWING_OUT,
     }
 
     private ArmState mCurrentState;
@@ -141,11 +140,7 @@ public class ArmSystem {
                     setSliderHeight(2);
                     mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
                 } else {
-                    if (position == Position.POSITION_WEST) {
-                        mCurrentState = ArmState.STATE_SWING_OUT;
-                    } else {
-                        mCurrentState = ArmState.STATE_CHANGE_POSITION;
-                    }
+                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
                 }
                 break;
             case STATE_CLEAR_CHASSIS:
@@ -156,15 +151,13 @@ public class ArmSystem {
                 break;
             case STATE_CHANGE_POSITION:
                 movePresetPosition(position);
-                openGripper();
-                if(mWaiting.hasExpired()){
+                if (position == Position.POSITION_WEST) {
+                    setSliderHeight(mQueuePos);
+                } else {
+                    openGripper();
                     setSliderHeight(position.getHeight());
-                    mCurrentState = ArmState.STATE_SETTLE;
                 }
-                break;
-            case STATE_SWING_OUT:
-                movePresetPosition(position);
-                setSliderHeight(mQueuePos);
+                setSliderHeight(position.getHeight());
                 mCurrentState = ArmState.STATE_SETTLE;
                 break;
             case STATE_SETTLE:
