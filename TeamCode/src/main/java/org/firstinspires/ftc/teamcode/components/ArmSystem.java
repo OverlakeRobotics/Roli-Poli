@@ -51,7 +51,7 @@ public class ArmSystem {
         GRIPPER, WRIST, ELBOW, PIVOT
     }
     public enum ArmState {
-        STATE_INITIAL,
+        STATE_CHECK_OVER,
         STATE_CLEAR_CHASSIS,
         STATE_PLACE,
         STATE_SETTLE,
@@ -106,7 +106,7 @@ public class ArmSystem {
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
         movePresetPosition(Position.POSITION_HOME);
-        mCurrentState = ArmState.STATE_INITIAL;
+        mCurrentState = ArmState.STATE_CHECK_OVER;
         openGripper();
     }
 
@@ -136,8 +136,8 @@ public class ArmSystem {
     // Helper method for going to capstone or home
     private boolean moveInToPosition(Position position) {
         switch(mCurrentState) {
-            case STATE_INITIAL:
-                initialState();
+            case STATE_CHECK_OVER:
+                checkIfOver();
                 break;
             case STATE_CLEAR_CHASSIS:
                 raise(position);
@@ -154,7 +154,7 @@ public class ArmSystem {
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
-                    mCurrentState = ArmState.STATE_INITIAL;
+                    mCurrentState = ArmState.STATE_CHECK_OVER;
                     return true;
                 }
                 break;
@@ -165,8 +165,8 @@ public class ArmSystem {
     // Helper method for going out to the queued position
     private boolean moveOutToPosition(Position position) {
         switch(mCurrentState) {
-            case STATE_INITIAL:
-                initialState();
+            case STATE_CHECK_OVER:
+                checkIfOver();
                 break;
             case STATE_CLEAR_CHASSIS:
                 if (runSliderToTarget()) {
@@ -176,7 +176,7 @@ public class ArmSystem {
                 break;
             case STATE_PLACE:
                 if(mWaiting.hasExpired()) {
-                    mCurrentState = ArmState.STATE_INITIAL;
+                    mCurrentState = ArmState.STATE_CHECK_OVER;
                     incrementQueue();
                     return true;
                 }
@@ -188,7 +188,7 @@ public class ArmSystem {
         return false;
     }
 
-    private void initialState() {
+    private void checkIfOver() {
         if (getSliderPos() < calculateHeight(2)) {
             setSliderHeight(2);
             mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
