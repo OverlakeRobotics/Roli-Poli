@@ -176,18 +176,13 @@ public class ArmSystem {
                 break;
             case STATE_PLACE:
                 if(mWaiting.hasExpired()) {
-                    mCurrentState = ArmState.STATE_SETTLE;
-                }
-                break;
-            case STATE_RAISE:
-                raise(position);
-                break;
-            case STATE_SETTLE:
-                if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
                     incrementQueue();
                     return true;
                 }
+                break;
+            case STATE_RAISE:
+                raise(position);
                 break;
         }
         return false;
