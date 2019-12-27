@@ -146,18 +146,19 @@ public class ArmSystem {
                 break;
             case STATE_CLEAR_CHASSIS:
                 if (runSliderToTarget()) {
-                    if (position == Position.POSITION_WEST) {
+                    if (isCardinal(position)) {
+                        setSliderHeight(mQueuePos);
                         mCurrentState = ArmState.STATE_QUEUE_UP;
                     } else {
                         mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                        mWaiting.reset();
                     }
-                    mWaiting.reset();
                 }
                 break;
             case STATE_CHANGE_POSITION:
                 movePresetPosition(position);
                 if(mWaiting.hasExpired()) {
-                    if (position != Position.POSITION_WEST) {
+                    if (!isCardinal(position)) {
                         openGripper();
                         setSliderHeight(position.getHeight());
                     }
@@ -168,13 +169,14 @@ public class ArmSystem {
                 setSliderHeight(mQueuePos);
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                    mWaiting.reset();
                 }
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
                 }
-                if (position == Position.POSITION_WEST) {
+                if (isCardinal(position)) {
                     incrementQueue();
                 }
                 break;
@@ -294,6 +296,15 @@ public class ArmSystem {
     }
     public void setCapstoning(boolean isCapstoning) {
         mCapstoning = isCapstoning;
+    }
+
+    private boolean isCardinal(Position p) {
+        switch(p) {
+            case POSITION_CAPSTONE:
+            case POSITION_HOME:
+                return false;
+        }
+        return true;
     }
 
 }
