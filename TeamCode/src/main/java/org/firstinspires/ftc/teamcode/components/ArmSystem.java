@@ -59,6 +59,7 @@ public class ArmSystem {
     }
 
     private ArmState mCurrentState;
+    private ArmState mCurrentOutState;
 
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
     private int mCalibrationDistance;
@@ -137,51 +138,75 @@ public class ArmSystem {
     private boolean moveToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_INITIAL:
-                if (getSliderPos() < calculateHeight(2)) {
-                    setSliderHeight(2);
-                    mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
-                } else {
-                    mCurrentState = ArmState.STATE_PLACE;
-                }
+                initialState(mCurrentState);
                 break;
             case STATE_CLEAR_CHASSIS:
-                if (runSliderToTarget()) {
-                    if (isCardinal(position)) {
-                        setSliderHeight(mQueuePos);
-                        mCurrentState = ArmState.STATE_RAISE;
-                    } else {
-                        movePresetPosition(position);
-                        mCurrentState = ArmState.STATE_PLACE;
-                        mWaiting.reset();
-                    }
-                }
+                raise(mCurrentState, position);
                 break;
             case STATE_PLACE:
                 if(mWaiting.hasExpired()) {
-                    if (!isCardinal(position)) {
-                        openGripper();
-                        setSliderHeight(position.getHeight());
-                    }
+                    openGripper();
+                    setSliderHeight(position.getHeight());
                     mCurrentState = ArmState.STATE_SETTLE;
                 }
                 break;
             case STATE_RAISE:
-                if (runSliderToTarget()) {
-                    movePresetPosition(position);
-                    mCurrentState = ArmState.STATE_PLACE;
-                    mWaiting.reset();
-                }
+                raise(mCurrentState, position);
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
                 }
-                if (isCardinal(position)) {
+                break;
+        }
+        return false;
+    }
+
+    // Helper method for going out to the queued position
+    private boolean moveOutToPosition(Position position) {
+        switch(mCurrentOutState) {
+            case STATE_INITIAL:
+                initialState(mCurrentOutState);
+                break;
+            case STATE_CLEAR_CHASSIS:
+                if (runSliderToTarget()) {
+                    setSliderHeight(mQueuePos);
+                    mCurrentOutState = ArmState.STATE_RAISE;
+                }
+                break;
+            case STATE_PLACE:
+                if(mWaiting.hasExpired()) {
+                    mCurrentOutState = ArmState.STATE_SETTLE;
+                }
+                break;
+            case STATE_RAISE:
+                raise(mCurrentOutState, position);
+                break;
+            case STATE_SETTLE:
+                if (runSliderToTarget()) {
+                    mCurrentOutState = ArmState.STATE_INITIAL;
                     incrementQueue();
                 }
                 break;
         }
         return false;
+    }
+
+    private void initialState(ArmState state) {
+        if (getSliderPos() < calculateHeight(2)) {
+            setSliderHeight(2);
+            state = ArmState.STATE_CLEAR_CHASSIS;
+        } else {
+            state = ArmState.STATE_PLACE;
+        }
+    }
+
+    private void raise(ArmState state, Position position) {
+        if (runSliderToTarget()) {
+            movePresetPosition(position);
+            state = ArmState.STATE_PLACE;
+            mWaiting.reset();
+        }
     }
 
     // Go to the home position
