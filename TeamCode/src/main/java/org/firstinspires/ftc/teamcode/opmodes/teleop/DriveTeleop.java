@@ -59,7 +59,7 @@ public class DriveTeleop extends BaseOpMode {
         } else if (armSystem.isCapstoning()) {
             armSystem.setCapstoning(!armSystem.moveToCapstone());
         } else if (armSystem.isQueuing()) {
-            armSystem.setQueuing(!armSystem.runToQueueHeight());
+            armSystem.runToQueueHeight();
         } else if (gamepad2.x) {
             armSystem.setHoming(!armSystem.moveToHome());
         } else if (gamepad2.y) {
@@ -78,9 +78,9 @@ public class DriveTeleop extends BaseOpMode {
             if (armSystem.awaitingConfirmation()) {
                 armSystem.changePlaceState(ArmSystem.ArmState.STATE_CLEAR_TOWER);
             }
-            armSystem.setPlacing(!armSystem.place());
+            armSystem.place();
         } else if (armSystem.isPlacing()) {
-            armSystem.setPlacing(!armSystem.place());
+            armSystem.place();
         }
 
         if (gamepad2.a && !gripped) {

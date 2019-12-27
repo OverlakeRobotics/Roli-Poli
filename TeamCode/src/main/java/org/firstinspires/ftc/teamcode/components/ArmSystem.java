@@ -173,6 +173,7 @@ public class ArmSystem {
     private boolean moveOutToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
+                mQueuing = true;
                 checkIfOver();
                 break;
             case STATE_CLEAR_CHASSIS:
@@ -185,6 +186,7 @@ public class ArmSystem {
                 if(mWaiting.hasExpired()) {
                     mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
                     incrementQueue();
+                    mQueuing = false;
                     return true;
                 }
                 break;
@@ -337,6 +339,7 @@ public class ArmSystem {
         switch(mCurrentState) {
             // Drops the block
             case STATE_LOWER_HEIGHT:
+                mPlacing = true;
                 setSliderHeight(getSliderPos() - 0.5);
                 mCurrentState = ArmState.STATE_DROP;
             case STATE_DROP:
@@ -357,6 +360,7 @@ public class ArmSystem {
             // Goes home
             case STATE_HOME:
                 if (moveToHome()) {
+                    mPlacing = false;
                     return true;
                 }
                 break;
