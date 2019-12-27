@@ -59,7 +59,6 @@ public class ArmSystem {
     }
 
     private ArmState mCurrentState;
-    private ArmState mCurrentOutState;
 
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
     private int mCalibrationDistance;
@@ -131,17 +130,17 @@ public class ArmSystem {
 
     // Go to capstone position
     public boolean moveToCapstone() {
-        return moveToPosition(Position.POSITION_CAPSTONE);
+        return moveInToPosition(Position.POSITION_CAPSTONE);
     }
 
     // Helper method for going to capstone or home
-    private boolean moveToPosition(Position position) {
+    private boolean moveInToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_INITIAL:
-                initialState(mCurrentState);
+                initialState();
                 break;
             case STATE_CLEAR_CHASSIS:
-                raise(mCurrentState, position);
+                raise(position);
                 break;
             case STATE_PLACE:
                 if(mWaiting.hasExpired()) {
@@ -151,7 +150,7 @@ public class ArmSystem {
                 }
                 break;
             case STATE_RAISE:
-                raise(mCurrentState, position);
+                raise(position);
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
@@ -164,27 +163,27 @@ public class ArmSystem {
 
     // Helper method for going out to the queued position
     private boolean moveOutToPosition(Position position) {
-        switch(mCurrentOutState) {
+        switch(mCurrentState) {
             case STATE_INITIAL:
-                initialState(mCurrentOutState);
+                initialState();
                 break;
             case STATE_CLEAR_CHASSIS:
                 if (runSliderToTarget()) {
                     setSliderHeight(mQueuePos);
-                    mCurrentOutState = ArmState.STATE_RAISE;
+                    mCurrentState = ArmState.STATE_RAISE;
                 }
                 break;
             case STATE_PLACE:
                 if(mWaiting.hasExpired()) {
-                    mCurrentOutState = ArmState.STATE_SETTLE;
+                    mCurrentState = ArmState.STATE_SETTLE;
                 }
                 break;
             case STATE_RAISE:
-                raise(mCurrentOutState, position);
+                raise(position);
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
-                    mCurrentOutState = ArmState.STATE_INITIAL;
+                    mCurrentState = ArmState.STATE_INITIAL;
                     incrementQueue();
                 }
                 break;
@@ -192,19 +191,19 @@ public class ArmSystem {
         return false;
     }
 
-    private void initialState(ArmState state) {
+    private void initialState() {
         if (getSliderPos() < calculateHeight(2)) {
             setSliderHeight(2);
-            state = ArmState.STATE_CLEAR_CHASSIS;
+            mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
         } else {
-            state = ArmState.STATE_PLACE;
+            mCurrentState = ArmState.STATE_PLACE;
         }
     }
 
-    private void raise(ArmState state, Position position) {
+    private void raise(Position position) {
         if (runSliderToTarget()) {
             movePresetPosition(position);
-            state = ArmState.STATE_PLACE;
+            mCurrentState = ArmState.STATE_PLACE;
             mWaiting.reset();
         }
     }
@@ -213,7 +212,7 @@ public class ArmSystem {
     // Moves the slider up to one block high, moves the gripper to the home position, and then moves
     // back down so we can fit under the bridge.
     public boolean moveToHome() {
-        return moveToPosition(Position.POSITION_HOME);
+        return moveInToPosition(Position.POSITION_HOME);
     }
 
     public void openGripper() {
