@@ -55,6 +55,7 @@ public class ArmSystem {
         STATE_CLEAR_CHASSIS,
         STATE_CHANGE_POSITION,
         STATE_SETTLE,
+        STATE_QUEUE_UP,
     }
 
     private ArmState mCurrentState;
@@ -134,7 +135,7 @@ public class ArmSystem {
 
     // Helper method for going to capstone or home
     private boolean moveToPosition(Position position) {
-        switch(mCurrentState){
+        switch(mCurrentState) {
             case STATE_INITIAL:
                 if (getSliderPos() < calculateHeight(2)) {
                     setSliderHeight(2);
@@ -144,21 +145,30 @@ public class ArmSystem {
                 }
                 break;
             case STATE_CLEAR_CHASSIS:
-                if(runSliderToTarget()){
-                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                if (runSliderToTarget()) {
+                    if (position == Position.POSITION_WEST) {
+                        mCurrentState = ArmState.STATE_QUEUE_UP;
+                    } else {
+                        mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                    }
                     mWaiting.reset();
                 }
                 break;
             case STATE_CHANGE_POSITION:
                 movePresetPosition(position);
-                if (position == Position.POSITION_WEST) {
-                    setSliderHeight(mQueuePos);
-                } else {
-                    openGripper();
-                    setSliderHeight(position.getHeight());
+                if(mWaiting.hasExpired()) {
+                    if (position != Position.POSITION_WEST) {
+                        openGripper();
+                        setSliderHeight(position.getHeight());
+                    }
+                    mCurrentState = ArmState.STATE_SETTLE;
                 }
-                setSliderHeight(position.getHeight());
-                mCurrentState = ArmState.STATE_SETTLE;
+                break;
+            case STATE_QUEUE_UP:
+                setSliderHeight(mQueuePos);
+                if (runSliderToTarget()) {
+                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                }
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
