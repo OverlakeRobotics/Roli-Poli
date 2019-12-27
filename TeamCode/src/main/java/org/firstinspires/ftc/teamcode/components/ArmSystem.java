@@ -51,9 +51,9 @@ public class ArmSystem {
         GRIPPER, WRIST, ELBOW, PIVOT
     }
     public enum ArmState {
-        STATE_CHECK_OVER,
+        STATE_CHECK_CLEARANCE,
         STATE_CLEAR_CHASSIS,
-        STATE_PLACE,
+        STATE_ADJUST_ORIENTATION,
         STATE_SETTLE,
         STATE_RAISE,
     }
@@ -106,7 +106,7 @@ public class ArmSystem {
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
         movePresetPosition(Position.POSITION_HOME);
-        mCurrentState = ArmState.STATE_CHECK_OVER;
+        mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
         openGripper();
     }
 
@@ -136,13 +136,13 @@ public class ArmSystem {
     // Helper method for going to capstone or home
     private boolean moveInToPosition(Position position) {
         switch(mCurrentState) {
-            case STATE_CHECK_OVER:
+            case STATE_CHECK_CLEARANCE:
                 checkIfOver();
                 break;
             case STATE_CLEAR_CHASSIS:
                 raise(position);
                 break;
-            case STATE_PLACE:
+            case STATE_ADJUST_ORIENTATION:
                 if(mWaiting.hasExpired()) {
                     openGripper();
                     setSliderHeight(position.getHeight());
@@ -154,7 +154,7 @@ public class ArmSystem {
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
-                    mCurrentState = ArmState.STATE_CHECK_OVER;
+                    mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
                     return true;
                 }
                 break;
@@ -165,7 +165,7 @@ public class ArmSystem {
     // Helper method for going out to the queued position
     private boolean moveOutToPosition(Position position) {
         switch(mCurrentState) {
-            case STATE_CHECK_OVER:
+            case STATE_CHECK_CLEARANCE:
                 checkIfOver();
                 break;
             case STATE_CLEAR_CHASSIS:
@@ -174,9 +174,9 @@ public class ArmSystem {
                     mCurrentState = ArmState.STATE_RAISE;
                 }
                 break;
-            case STATE_PLACE:
+            case STATE_ADJUST_ORIENTATION:
                 if(mWaiting.hasExpired()) {
-                    mCurrentState = ArmState.STATE_CHECK_OVER;
+                    mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
                     incrementQueue();
                     return true;
                 }
@@ -193,14 +193,14 @@ public class ArmSystem {
             setSliderHeight(2);
             mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
         } else {
-            mCurrentState = ArmState.STATE_PLACE;
+            mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
         }
     }
 
     private void raise(Position position) {
         if (runSliderToTarget()) {
             movePresetPosition(position);
-            mCurrentState = ArmState.STATE_PLACE;
+            mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
             mWaiting.reset();
         }
     }
