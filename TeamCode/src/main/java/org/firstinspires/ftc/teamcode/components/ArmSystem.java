@@ -155,6 +155,7 @@ public class ArmSystem {
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
+                    return true;
                 }
                 break;
         }
@@ -185,6 +186,7 @@ public class ArmSystem {
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_INITIAL;
                     incrementQueue();
+                    return true;
                 }
                 break;
         }
