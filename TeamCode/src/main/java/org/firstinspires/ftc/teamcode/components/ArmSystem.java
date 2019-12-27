@@ -53,9 +53,9 @@ public class ArmSystem {
     public enum ArmState {
         STATE_INITIAL,
         STATE_CLEAR_CHASSIS,
-        STATE_CHANGE_POSITION,
+        STATE_PLACE,
         STATE_SETTLE,
-        STATE_QUEUE_UP,
+        STATE_RAISE,
     }
 
     private ArmState mCurrentState;
@@ -141,22 +141,22 @@ public class ArmSystem {
                     setSliderHeight(2);
                     mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
                 } else {
-                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                    mCurrentState = ArmState.STATE_PLACE;
                 }
                 break;
             case STATE_CLEAR_CHASSIS:
                 if (runSliderToTarget()) {
                     if (isCardinal(position)) {
                         setSliderHeight(mQueuePos);
-                        mCurrentState = ArmState.STATE_QUEUE_UP;
+                        mCurrentState = ArmState.STATE_RAISE;
                     } else {
-                        mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                        movePresetPosition(position);
+                        mCurrentState = ArmState.STATE_PLACE;
                         mWaiting.reset();
                     }
                 }
                 break;
-            case STATE_CHANGE_POSITION:
-                movePresetPosition(position);
+            case STATE_PLACE:
                 if(mWaiting.hasExpired()) {
                     if (!isCardinal(position)) {
                         openGripper();
@@ -165,10 +165,10 @@ public class ArmSystem {
                     mCurrentState = ArmState.STATE_SETTLE;
                 }
                 break;
-            case STATE_QUEUE_UP:
-                setSliderHeight(mQueuePos);
+            case STATE_RAISE:
                 if (runSliderToTarget()) {
-                    mCurrentState = ArmState.STATE_CHANGE_POSITION;
+                    movePresetPosition(position);
+                    mCurrentState = ArmState.STATE_PLACE;
                     mWaiting.reset();
                 }
                 break;
