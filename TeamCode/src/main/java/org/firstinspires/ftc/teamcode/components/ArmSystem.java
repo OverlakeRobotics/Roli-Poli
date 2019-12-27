@@ -58,7 +58,17 @@ public class ArmSystem {
         STATE_RAISE,
     }
 
+    public enum PlaceState {
+        STATE_LOWER_HEIGHT,
+        STATE_DROP,
+        STATE_WAITING,
+        STATE_OPEN,
+        STATE_CLEAR_TOWER,
+        STATE_HOME,
+    }
+
     private ArmState mCurrentState;
+    private PlaceState mPlaceState;
 
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
     private int mCalibrationDistance;
@@ -75,6 +85,7 @@ public class ArmSystem {
     private boolean mQueuing;
     private boolean mHoming;
     private boolean mCapstoning;
+    private boolean mPlacing;
 
     private final int MAX_HEIGHT = 7;
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
@@ -308,6 +319,9 @@ public class ArmSystem {
     public boolean isCapstoning() {
         return mCapstoning;
     }
+    public boolean isPlacing() {
+        return mPlacing;
+    }
 
     public void setHoming(boolean isHoming) {
         mHoming = isHoming;
@@ -318,14 +332,48 @@ public class ArmSystem {
     public void setCapstoning(boolean isCapstoning) {
         mCapstoning = isCapstoning;
     }
+    public void setPlacing(boolean isPlacing) {
+        mPlacing = isPlacing;
+    }
 
-    private boolean isCardinal(Position p) {
-        switch(p) {
-            case POSITION_CAPSTONE:
-            case POSITION_HOME:
-                return false;
+
+    public boolean place() {
+        switch(mPlaceState) {
+            // Drops the block
+            case STATE_LOWER_HEIGHT:
+                setSliderHeight(getSliderPos() - 0.5);
+                mPlaceState = PlaceState.STATE_DROP;
+            case STATE_DROP:
+                if (runSliderToTarget()) {
+                    mPlaceState = PlaceState.STATE_WAITING;
+                }
+            case STATE_OPEN:
+                openGripper();
+                setSliderHeight(getSliderPos() + 0.5);
+                mPlaceState = PlaceState.STATE_CLEAR_TOWER;
+                break;
+            // Raises up a half-block
+            case STATE_CLEAR_TOWER:
+                if (runSliderToTarget()) {
+                    mPlaceState = PlaceState.STATE_HOME;
+                }
+                break;
+            // Goes home
+            case STATE_HOME:
+                if (moveToHome()) {
+                    return true;
+                }
+                break;
         }
-        return true;
+        return false;
+    }
+
+    public boolean isWaitingPlace() {
+        return mPlaceState == PlaceState.STATE_WAITING;
+    }
+
+    public void changePlaceState(PlaceState state) {
+        mPlaceState = state;
     }
 
 }

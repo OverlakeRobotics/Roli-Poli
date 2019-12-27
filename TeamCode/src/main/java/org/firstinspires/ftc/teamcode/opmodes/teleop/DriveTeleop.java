@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.teamcode.components.ArmSystem;
 import org.firstinspires.ftc.teamcode.components.LatchSystem;
 import org.firstinspires.ftc.teamcode.opmodes.base.BaseOpMode;
 
@@ -12,7 +13,7 @@ public class DriveTeleop extends BaseOpMode {
     private boolean rightLatchHit = false;
 
     private final double SLIDER_SPEED = 1;
-    private boolean gripped, down, up, queueUp;
+    private boolean gripped, down, up, queueUp, place;
     
     public void loop(){
         float rx = (float) Math.pow(gamepad1.right_stick_x, 3);
@@ -75,6 +76,14 @@ public class DriveTeleop extends BaseOpMode {
             armSystem.setCapstoning(false);
             armSystem.setQueuing(false);
             armSystem.setHoming(false);
+            armSystem.setPlacing(false);
+        } else if (gamepad2.right_stick_button) {
+            if (armSystem.isWaitingPlace()) {
+                armSystem.changePlaceState(ArmSystem.PlaceState.STATE_CLEAR_TOWER);
+            }
+            armSystem.setPlacing(armSystem.place());
+        } else if (armSystem.isPlacing()) {
+            armSystem.setPlacing(armSystem.place());
         }
 
         if (gamepad2.a && !gripped) {
