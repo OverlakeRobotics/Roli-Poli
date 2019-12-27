@@ -55,15 +55,15 @@ public class DriveTeleop extends BaseOpMode {
 
 
         if (armSystem.isHoming()) {
-            armSystem.setHoming(armSystem.moveToHome());
+            armSystem.setHoming(!armSystem.moveToHome());
         } else if (armSystem.isCapstoning()) {
-            armSystem.setCapstoning(armSystem.moveToCapstone());
+            armSystem.setCapstoning(!armSystem.moveToCapstone());
         } else if (armSystem.isQueuing()) {
-            armSystem.setQueuing(armSystem.runToQueueHeight());
+            armSystem.setQueuing(!armSystem.runToQueueHeight());
         } else if (gamepad2.x) {
-            armSystem.setHoming(armSystem.moveToHome());
+            armSystem.setHoming(!armSystem.moveToHome());
         } else if (gamepad2.y) {
-            armSystem.setCapstoning(armSystem.moveToCapstone());
+            armSystem.setCapstoning(!armSystem.moveToCapstone());
         } else if (gamepad2.dpad_left) {
             armSystem.moveWest();
         } else if (gamepad2.dpad_right) {
@@ -73,17 +73,14 @@ public class DriveTeleop extends BaseOpMode {
         } else if (gamepad2.dpad_down) {
             armSystem.moveSouth();
         } else if (gamepad2.back) {
-            armSystem.setCapstoning(false);
-            armSystem.setQueuing(false);
-            armSystem.setHoming(false);
-            armSystem.setPlacing(false);
+            armSystem.cancelAutoRoutine();
         } else if (gamepad2.right_stick_button) {
-            if (armSystem.isWaitingPlace()) {
-                armSystem.changePlaceState(ArmSystem.PlaceState.STATE_CLEAR_TOWER);
+            if (armSystem.awaitingConfirmation()) {
+                armSystem.changePlaceState(ArmSystem.ArmState.STATE_CLEAR_TOWER);
             }
-            armSystem.setPlacing(armSystem.place());
+            armSystem.setPlacing(!armSystem.place());
         } else if (armSystem.isPlacing()) {
-            armSystem.setPlacing(armSystem.place());
+            armSystem.setPlacing(!armSystem.place());
         }
 
         if (gamepad2.a && !gripped) {

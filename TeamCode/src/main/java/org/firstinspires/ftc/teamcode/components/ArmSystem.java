@@ -56,9 +56,6 @@ public class ArmSystem {
         STATE_ADJUST_ORIENTATION,
         STATE_SETTLE,
         STATE_RAISE,
-    }
-
-    public enum PlaceState {
         STATE_LOWER_HEIGHT,
         STATE_DROP,
         STATE_WAITING,
@@ -68,7 +65,6 @@ public class ArmSystem {
     }
 
     private ArmState mCurrentState;
-    private PlaceState mPlaceState;
 
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
     private int mCalibrationDistance;
@@ -338,24 +334,24 @@ public class ArmSystem {
 
 
     public boolean place() {
-        switch(mPlaceState) {
+        switch(mCurrentState) {
             // Drops the block
             case STATE_LOWER_HEIGHT:
                 setSliderHeight(getSliderPos() - 0.5);
-                mPlaceState = PlaceState.STATE_DROP;
+                mCurrentState = ArmState.STATE_DROP;
             case STATE_DROP:
                 if (runSliderToTarget()) {
-                    mPlaceState = PlaceState.STATE_WAITING;
+                    mCurrentState = ArmState.STATE_WAITING;
                 }
             case STATE_OPEN:
                 openGripper();
                 setSliderHeight(getSliderPos() + 0.5);
-                mPlaceState = PlaceState.STATE_CLEAR_TOWER;
+                mCurrentState = ArmState.STATE_CLEAR_TOWER;
                 break;
             // Raises up a half-block
             case STATE_CLEAR_TOWER:
                 if (runSliderToTarget()) {
-                    mPlaceState = PlaceState.STATE_HOME;
+                    mCurrentState = ArmState.STATE_HOME;
                 }
                 break;
             // Goes home
@@ -368,12 +364,19 @@ public class ArmSystem {
         return false;
     }
 
-    public boolean isWaitingPlace() {
-        return mPlaceState == PlaceState.STATE_WAITING;
+    public boolean awaitingConfirmation() {
+        return mCurrentState == ArmState.STATE_WAITING;
     }
 
-    public void changePlaceState(PlaceState state) {
-        mPlaceState = state;
+    public void changePlaceState(ArmState state) {
+        mCurrentState = state;
+    }
+
+    public void cancelAutoRoutine() {
+        mCapstoning = false;
+        mHoming = false;
+        mPlacing = false;
+        mQueuing = false;
     }
 
 }
