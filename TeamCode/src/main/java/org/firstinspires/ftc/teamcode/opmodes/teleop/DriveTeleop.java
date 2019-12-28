@@ -80,7 +80,9 @@ public class DriveTeleop extends BaseOpMode {
             }
             armSystem.place();
         } else if (armSystem.isPlacing()) {
-            armSystem.place();
+            if (armSystem.place()) {
+                armSystem.setHoming(armSystem.moveToHome());
+            }
         }
 
         if (gamepad2.a && !gripped) {

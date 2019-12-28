@@ -354,12 +354,7 @@ public class ArmSystem {
             // Raises up a half-block
             case STATE_CLEAR_TOWER:
                 if (runSliderToTarget()) {
-                    mCurrentState = ArmState.STATE_HOME;
-                }
-                break;
-            // Goes home
-            case STATE_HOME:
-                if (moveToHome()) {
+                    mCurrentState = ArmState.STATE_LOWER_HEIGHT;
                     mPlacing = false;
                     return true;
                 }
