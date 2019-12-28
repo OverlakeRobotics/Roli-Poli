@@ -13,7 +13,8 @@ public class DriveTeleop extends BaseOpMode {
     private boolean rightLatchHit = false;
 
     private final double SLIDER_SPEED = 1;
-    private boolean gripped, down, up, queueUp, place;
+    private boolean gripped, down, up;
+    private boolean mPlacing, mCapstoning, mHoming, mQueuing;
     
     public void loop(){
         float rx = (float) Math.pow(gamepad1.right_stick_x, 3);
@@ -54,16 +55,30 @@ public class DriveTeleop extends BaseOpMode {
         }
 
 
-        if (armSystem.isHoming()) {
-            armSystem.moveToHome();
-        } else if (armSystem.isCapstoning()) {
-            armSystem.moveToCapstone();
-        } else if (armSystem.isQueuing()) {
-            armSystem.runToQueueHeight();
+        if (gamepad2.right_stick_button) {
+            if (armSystem.awaitingConfirmation()) {
+                armSystem.changePlaceState(ArmSystem.ArmState.STATE_CLEAR_TOWER);
+            } else {
+                armSystem.startPlacing();
+            }
+            mPlacing = !armSystem.place();
+            return;
+        } else if (mPlacing) {
+            mPlacing = !armSystem.place();
+            if (!mPlacing) {
+                armSystem.moveToHome();
+            }
+            return;
+        } else if (mHoming) {
+            mHoming = !armSystem.moveToHome();
+        } else if (mCapstoning) {
+            mCapstoning = !armSystem.moveToCapstone();
+        } else if (mQueuing) {
+            mQueuing = !armSystem.moveOutToPosition(ArmSystem.Position.POSITION_WEST);
         } else if (gamepad2.x) {
-            armSystem.moveToHome();
+            mHoming = !armSystem.moveToHome();
         } else if (gamepad2.y) {
-            armSystem.moveToCapstone();
+            mCapstoning = !armSystem.moveToCapstone();
         } else if (gamepad2.dpad_left) {
             armSystem.moveWest();
         } else if (gamepad2.dpad_right) {
@@ -73,16 +88,12 @@ public class DriveTeleop extends BaseOpMode {
         } else if (gamepad2.dpad_down) {
             armSystem.moveSouth();
         } else if (gamepad2.back) {
-            armSystem.cancelAutoRoutine();
-        } else if (gamepad2.right_stick_button) {
-            if (armSystem.awaitingConfirmation()) {
-                armSystem.changePlaceState(ArmSystem.ArmState.STATE_CLEAR_TOWER);
-            }
-            armSystem.place();
-        } else if (armSystem.isPlacing()) {
-            if (armSystem.place()) {
-                armSystem.moveToHome();
-            }
+            mQueuing = false;
+            mCapstoning = false;
+            mHoming = false;
+            mPlacing = false;
+        } else if (gamepad2.start) {
+            mQueuing = !armSystem.moveOutToPosition(ArmSystem.Position.POSITION_WEST);
         }
 
         if (gamepad2.a && !gripped) {
@@ -97,13 +108,6 @@ public class DriveTeleop extends BaseOpMode {
             up = true;
         } else if (!gamepad2.right_bumper) {
             up = false;
-        }
-
-        if (gamepad2.start && !queueUp) {
-            armSystem.setQueuing(armSystem.runToQueueHeight());
-            queueUp = true;
-        } else if (!gamepad2.start) {
-            queueUp = false;
         }
 
 

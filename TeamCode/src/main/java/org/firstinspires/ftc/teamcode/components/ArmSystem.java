@@ -62,6 +62,7 @@ public class ArmSystem {
         STATE_OPEN,
         STATE_CLEAR_TOWER,
         STATE_HOME,
+        STATE_INITIAL,
     }
 
     private ArmState mCurrentState;
@@ -78,10 +79,6 @@ public class ArmSystem {
     private double mQueuePos;
     // This variable is used for all the auto methods.
     private Deadline mWaiting;
-    private boolean mQueuing;
-    private boolean mHoming;
-    private boolean mCapstoning;
-    private boolean mPlacing;
 
     private final int MAX_HEIGHT = 7;
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
@@ -144,7 +141,6 @@ public class ArmSystem {
     private boolean moveInToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
-                boolean setState = (position == Position.POSITION_HOME) ? (mHoming = true) : (mCapstoning = true);
                 checkIfOver();
                 break;
             case STATE_CLEAR_CHASSIS:
@@ -160,7 +156,6 @@ public class ArmSystem {
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
-                    boolean changeState = (position == Position.POSITION_HOME) ? (mHoming = false) : (mCapstoning = false);
                     return true;
                 }
                 break;
@@ -169,10 +164,9 @@ public class ArmSystem {
     }
 
     // Helper method for going out to the queued position
-    private boolean moveOutToPosition(Position position) {
+    public boolean moveOutToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
-                mQueuing = true;
                 checkIfOver();
                 break;
             case STATE_CLEAR_CHASSIS:
@@ -185,7 +179,6 @@ public class ArmSystem {
                 if(mWaiting.hasExpired()) {
                     mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
                     incrementQueue();
-                    mQueuing = false;
                     return true;
                 }
                 break;
@@ -307,38 +300,13 @@ public class ArmSystem {
         return mQueuePos;
     }
 
-    public boolean isHoming() {
-        return mHoming;
-    }
-    public boolean isQueuing() {
-        return mQueuing;
-    }
-    public boolean isCapstoning() {
-        return mCapstoning;
-    }
-    public boolean isPlacing() {
-        return mPlacing;
-    }
-
-    public void setHoming(boolean isHoming) {
-        mHoming = isHoming;
-    }
-    public void setQueuing(boolean isQueuing) {
-        mQueuing = isQueuing;
-    }
-    public void setCapstoning(boolean isCapstoning) {
-        mCapstoning = isCapstoning;
-    }
-    public void setPlacing(boolean isPlacing) {
-        mPlacing = isPlacing;
-    }
-
 
     public boolean place() {
         switch(mCurrentState) {
             // Drops the block
+            case STATE_INITIAL:
+
             case STATE_LOWER_HEIGHT:
-                mPlacing = true;
                 setSliderHeight(getSliderPos() - 0.5);
                 mCurrentState = ArmState.STATE_DROP;
             case STATE_DROP:
@@ -353,8 +321,7 @@ public class ArmSystem {
             // Raises up a half-block
             case STATE_CLEAR_TOWER:
                 if (runSliderToTarget()) {
-                    mCurrentState = ArmState.STATE_LOWER_HEIGHT;
-                    mPlacing = false;
+                    mCurrentState = ArmState.STATE_INITIAL;
                     return true;
                 }
                 break;
@@ -370,11 +337,8 @@ public class ArmSystem {
         mCurrentState = state;
     }
 
-    public void cancelAutoRoutine() {
-        mCapstoning = false;
-        mHoming = false;
-        mPlacing = false;
-        mQueuing = false;
+    public void startPlacing() {
+        mCurrentState = ArmState.STATE_LOWER_HEIGHT;
     }
 
 }
