@@ -144,6 +144,7 @@ public class ArmSystem {
     private boolean moveInToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
+                boolean setState = (position == Position.POSITION_HOME) ? (mHoming = true) : (mCapstoning = true);
                 checkIfOver();
                 break;
             case STATE_CLEAR_CHASSIS:
@@ -156,12 +157,10 @@ public class ArmSystem {
                     mCurrentState = ArmState.STATE_SETTLE;
                 }
                 break;
-            case STATE_RAISE:
-                raise(position);
-                break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
+                    boolean changeState = (position == Position.POSITION_HOME) ? (mHoming = false) : (mCapstoning = false);
                     return true;
                 }
                 break;
