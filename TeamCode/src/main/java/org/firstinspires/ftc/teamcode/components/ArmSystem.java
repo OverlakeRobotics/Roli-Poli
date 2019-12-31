@@ -163,7 +163,7 @@ public class ArmSystem {
         return false;
     }
 
-    // Helper method for going out to the queued position
+    // Auto method for moving out to the queued height and given position
     public boolean moveOutToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
@@ -189,6 +189,7 @@ public class ArmSystem {
         return false;
     }
 
+    // Makes sure that the arm is above height 2 in order to clear the chassis
     private void checkIfOver() {
         if (getSliderPos() < calculateHeight(2)) {
             setSliderHeight(2);
@@ -198,6 +199,7 @@ public class ArmSystem {
         }
     }
 
+    // Once the slider is at the target, start moving to a preset position
     private void raise(Position position) {
         if (runSliderToTarget()) {
             movePresetPosition(position);
