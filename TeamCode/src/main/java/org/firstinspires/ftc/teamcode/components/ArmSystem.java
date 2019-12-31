@@ -141,7 +141,7 @@ public class ArmSystem {
     private boolean moveInToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
-                checkIfOver();
+                checkIfAboveChassis();
                 break;
             case STATE_CLEAR_CHASSIS:
                 raise(position);
@@ -167,7 +167,7 @@ public class ArmSystem {
     public boolean moveOutToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
-                checkIfOver();
+                checkIfAboveChassis();
                 break;
             case STATE_CLEAR_CHASSIS:
                 if (runSliderToTarget()) {
@@ -190,7 +190,7 @@ public class ArmSystem {
     }
 
     // Makes sure that the arm is above height 2 in order to clear the chassis
-    private void checkIfOver() {
+    private void checkIfAboveChassis() {
         if (getSliderPos() < calculateHeight(2)) {
             setSliderHeight(2);
             mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
