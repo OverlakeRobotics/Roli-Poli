@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.components;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import  com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -80,11 +82,11 @@ public class ArmSystem {
     // This variable is used for all the auto methods.
     private Deadline mWaiting;
 
-    private final int MAX_HEIGHT = 7;
+    private final int MAX_HEIGHT = 6;
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
-    private final int WAIT_TIME = 1000;
+    private final int WAIT_TIME = 500;
 
     public static final String TAG = "ArmSystem"; // for debugging
 
@@ -109,6 +111,8 @@ public class ArmSystem {
         this.mCalibrationDistance = slider.getCurrentPosition();
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
+        mTargetHeight = 0;
+        setSliderHeight(mTargetHeight);
         movePresetPosition(Position.POSITION_HOME);
         mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
         openGripper();
@@ -144,18 +148,26 @@ public class ArmSystem {
                 ensureIsAboveChassis();
                 break;
             case STATE_CLEAR_CHASSIS:
-                raise(position);
+                Log.d(TAG, "Entered clear chassis");
+                if (runSliderToTarget()) {
+                    movePresetPosition(position);
+                    mWaiting.reset();
+                    mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
+                    Log.d(TAG, "reached raise");
+                }
                 break;
             case STATE_ADJUST_ORIENTATION:
                 if(mWaiting.hasExpired()) {
                     openGripper();
                     setSliderHeight(position.getHeight());
                     mCurrentState = ArmState.STATE_SETTLE;
+                    Log.d(TAG, "reached waiting expired");
                 }
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
+                    Log.d(TAG, "reached state settle");
                     return true;
                 }
                 break;
@@ -193,10 +205,11 @@ public class ArmSystem {
     private void ensureIsAboveChassis() {
         if (getSliderPos() < calculateHeight(2)) {
             setSliderHeight(2);
-            mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
         } else {
-            mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
+            slider.setTargetPosition(slider.getCurrentPosition());
+            Log.d(TAG, "reached isAboveChassis");
         }
+        mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
     }
 
     // Once the slider is at the target, start moving to a preset position
@@ -241,6 +254,7 @@ public class ArmSystem {
     // Pos should be the # of blocks high it should be
     // MUST BE CALLED before runSliderToTarget
     public void setSliderHeight(double pos) {
+        // Log.d(TAG, "exists here");
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
         setPosTarget();
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -257,13 +271,9 @@ public class ArmSystem {
     }
 
     // Must be called every loop
-    public boolean runSliderToTarget(){
-        if (slider.isBusy()) {
-            return slider.getCurrentPosition() == slider.getTargetPosition();
-        } else {
-            slider.setPower(1.0);
-            return false;
-        }
+    public boolean runSliderToTarget() {
+        slider.setPower(1.0);
+        return slider.getCurrentPosition() == slider.getTargetPosition();
     }
 
     public int getSliderPos() {
@@ -307,14 +317,16 @@ public class ArmSystem {
         switch(mCurrentState) {
             // Drops the block
             case STATE_INITIAL:
-
+                break;
             case STATE_LOWER_HEIGHT:
                 setSliderHeight(getSliderPos() - 0.5);
                 mCurrentState = ArmState.STATE_DROP;
+                break;
             case STATE_DROP:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_WAITING;
                 }
+                break;
             case STATE_OPEN:
                 openGripper();
                 setSliderHeight(getSliderPos() + 0.5);

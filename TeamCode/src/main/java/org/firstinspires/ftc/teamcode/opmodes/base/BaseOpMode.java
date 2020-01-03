@@ -60,10 +60,6 @@ public abstract class BaseOpMode extends OpMode {
         }
         intakeSystem = new IntakeSystem(intakeMap, hardwareMap.get(Servo.class, "BOTTOM_INTAKE"));
 
-        DistanceSensor distanceSensor2;
-        DistanceSensor distanceSensor3;
-        ColorSensor colorSensor;
-
         EnumMap<ArmSystem.ServoNames, Servo> servoEnumMap = new EnumMap<>(ArmSystem.ServoNames.class);
 
         for (ArmSystem.ServoNames name : ArmSystem.ServoNames.values()) {

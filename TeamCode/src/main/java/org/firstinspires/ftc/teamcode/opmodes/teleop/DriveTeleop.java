@@ -1,10 +1,14 @@
 package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.components.ArmSystem;
 import org.firstinspires.ftc.teamcode.components.LatchSystem;
 import org.firstinspires.ftc.teamcode.opmodes.base.BaseOpMode;
+
+import static org.firstinspires.ftc.teamcode.components.ArmSystem.TAG;
 
 @TeleOp(name = "Real Teleop", group="TeleOp")
 public class DriveTeleop extends BaseOpMode {
@@ -55,7 +59,7 @@ public class DriveTeleop extends BaseOpMode {
         }
 
 
-        if (gamepad2.right_stick_button) {
+        if (gamepad2.b) {
             if (armSystem.awaitingConfirmation()) {
                 armSystem.changePlaceState(ArmSystem.ArmState.STATE_CLEAR_TOWER);
             } else {
@@ -118,7 +122,6 @@ public class DriveTeleop extends BaseOpMode {
             down = false;
         }
         //telemetry.addData("Target height: ", armSystem);
-
         armSystem.runSliderToTarget();
 
     }
