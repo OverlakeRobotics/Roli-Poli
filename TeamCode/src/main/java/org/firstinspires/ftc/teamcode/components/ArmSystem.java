@@ -86,7 +86,7 @@ public class ArmSystem {
     private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
-    private final int WAIT_TIME = 500;
+    private final int WAIT_TIME = 450;
 
     public static final String TAG = "ArmSystem"; // for debugging
 
@@ -176,22 +176,26 @@ public class ArmSystem {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
                 ensureIsAboveChassis();
-                break;
             case STATE_CLEAR_CHASSIS:
                 if (runSliderToTarget()) {
-                    setSliderHeight(mQueuePos);
-                    mCurrentState = ArmState.STATE_RAISE;
+                    movePresetPosition(position);
+                    mWaiting.reset();
+                    mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
+                }
+                break;
+            case STATE_RAISE:
+                if (runSliderToTarget()) {
+                    Log.d(TAG, "Run");
+                    incrementQueue();
+                    mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
+                    return true;
                 }
                 break;
             case STATE_ADJUST_ORIENTATION:
                 if(mWaiting.hasExpired()) {
-                    mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
-                    incrementQueue();
-                    return true;
+                    setSliderHeight(mQueuePos);
+                    mCurrentState = ArmState.STATE_RAISE;
                 }
-                break;
-            case STATE_RAISE:
-                raise(position);
                 break;
         }
         return false;
@@ -205,15 +209,6 @@ public class ArmSystem {
             slider.setTargetPosition(slider.getCurrentPosition());
         }
         mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
-    }
-
-    // Once the slider is at the target, start moving to a preset position
-    private void raise(Position position) {
-        if (runSliderToTarget()) {
-            movePresetPosition(position);
-            mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
-            mWaiting.reset();
-        }
     }
 
     // Go to the home position
@@ -313,22 +308,26 @@ public class ArmSystem {
             case STATE_INITIAL:
                 break;
             case STATE_LOWER_HEIGHT:
-                setSliderHeight(getSliderPos() - 0.5);
+                setSliderHeight(mTargetHeight - 0.1);
                 mCurrentState = ArmState.STATE_DROP;
+                Log.d(TAG, "changing to drop");
                 break;
             case STATE_DROP:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_WAITING;
+                    Log.d(TAG, "start waiting");
                 }
                 break;
             case STATE_OPEN:
                 openGripper();
-                setSliderHeight(getSliderPos() + 0.5);
+                setSliderHeight(mTargetHeight + 0.5);
                 mCurrentState = ArmState.STATE_CLEAR_TOWER;
+                Log.d(TAG, "start clear tower");
                 break;
             // Raises up a half-block
             case STATE_CLEAR_TOWER:
                 if (runSliderToTarget()) {
+                    Log.d(TAG, "tower cleared");
                     mCurrentState = ArmState.STATE_INITIAL;
                     return true;
                 }

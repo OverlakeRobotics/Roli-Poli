@@ -61,8 +61,10 @@ public class DriveTeleop extends BaseOpMode {
 
         if (gamepad2.b) {
             if (armSystem.awaitingConfirmation()) {
-                armSystem.changePlaceState(ArmSystem.ArmState.STATE_CLEAR_TOWER);
+                Log.d("DriveTeleop", "was waiting");
+                armSystem.changePlaceState(ArmSystem.ArmState.STATE_OPEN);
             } else {
+                Log.d("DriveTeleop", "start placing");
                 armSystem.startPlacing();
             }
             mPlacing = !armSystem.place();
@@ -96,7 +98,7 @@ public class DriveTeleop extends BaseOpMode {
             mCapstoning = false;
             mHoming = false;
             mPlacing = false;
-        } else if (gamepad2.start) {
+        } else if (gamepad2.right_stick_button) {
             mQueuing = !armSystem.moveOutToPosition(ArmSystem.Position.POSITION_WEST);
         }
 
