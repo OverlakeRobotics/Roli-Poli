@@ -184,6 +184,9 @@ public class ArmSystem {
                 }
                 break;
             case STATE_RAISE:
+                Log.d(TAG, "Checking if raised");
+                Log.d(TAG, "Slider Pos" + getSliderPos());
+                Log.d(TAG, "Target Pos" + slider.getTargetPosition());
                 if (runSliderToTarget()) {
                     Log.d(TAG, "Run");
                     incrementQueue();
@@ -262,7 +265,7 @@ public class ArmSystem {
     // Must be called every loop
     public boolean runSliderToTarget() {
         slider.setPower(1.0);
-        return slider.getCurrentPosition() == slider.getTargetPosition();
+        return areRoughlyEqual(slider.getCurrentPosition(), slider.getTargetPosition());
     }
 
     public int getSliderPos() {
@@ -271,15 +274,6 @@ public class ArmSystem {
 
     private void setPosTarget() {
         slider.setTargetPosition(calculateHeight(mTargetHeight));
-    }
-
-    public boolean runToQueueHeight() {
-        setSliderHeight(mQueuePos);
-        boolean complete = runSliderToTarget();
-        if (complete) {
-            incrementQueue();
-        }
-        return complete;
     }
 
     public void resetQueue() {
@@ -305,24 +299,12 @@ public class ArmSystem {
     public boolean place() {
         switch(mCurrentState) {
             // Drops the block
-            case STATE_INITIAL:
-                break;
-            case STATE_LOWER_HEIGHT:
-                setSliderHeight(mTargetHeight - 0.1);
-                mCurrentState = ArmState.STATE_DROP;
-                Log.d(TAG, "changing to drop");
-                break;
             case STATE_DROP:
-                if (runSliderToTarget()) {
-                    mCurrentState = ArmState.STATE_WAITING;
-                    Log.d(TAG, "start waiting");
-                }
-                break;
-            case STATE_OPEN:
+                Log.d(TAG, "started drop");
                 openGripper();
                 setSliderHeight(mTargetHeight + 0.5);
                 mCurrentState = ArmState.STATE_CLEAR_TOWER;
-                Log.d(TAG, "start clear tower");
+                Log.d(TAG, "start waiting");
                 break;
             // Raises up a half-block
             case STATE_CLEAR_TOWER:
@@ -336,16 +318,17 @@ public class ArmSystem {
         return false;
     }
 
-    public boolean awaitingConfirmation() {
-        return mCurrentState == ArmState.STATE_WAITING;
-    }
-
     public void changePlaceState(ArmState state) {
         mCurrentState = state;
     }
 
     public void startPlacing() {
-        mCurrentState = ArmState.STATE_LOWER_HEIGHT;
+        mCurrentState = ArmState.STATE_DROP;
+    }
+
+
+    private boolean areRoughlyEqual(int a, int b) {
+       return (a - 1 == b) || (a + 1 == b) || (a == b);
     }
 
 }

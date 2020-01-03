@@ -60,21 +60,9 @@ public class DriveTeleop extends BaseOpMode {
 
 
         if (gamepad2.b) {
-            if (armSystem.awaitingConfirmation()) {
-                Log.d("DriveTeleop", "was waiting");
-                armSystem.changePlaceState(ArmSystem.ArmState.STATE_OPEN);
-            } else {
-                Log.d("DriveTeleop", "start placing");
-                armSystem.startPlacing();
-            }
             mPlacing = !armSystem.place();
-            return;
         } else if (mPlacing) {
             mPlacing = !armSystem.place();
-            if (!mPlacing) {
-                armSystem.moveToHome();
-            }
-            return;
         } else if (mHoming) {
             mHoming = !armSystem.moveToHome();
         } else if (mCapstoning) {
@@ -85,14 +73,6 @@ public class DriveTeleop extends BaseOpMode {
             mHoming = !armSystem.moveToHome();
         } else if (gamepad2.y) {
             mCapstoning = !armSystem.moveToCapstone();
-        } else if (gamepad2.dpad_left) {
-            armSystem.moveWest();
-        } else if (gamepad2.dpad_right) {
-            armSystem.moveEast();
-        } else if (gamepad2.dpad_up) {
-            armSystem.moveNorth();
-        } else if (gamepad2.dpad_down) {
-            armSystem.moveSouth();
         } else if (gamepad2.back) {
             mQueuing = false;
             mCapstoning = false;
@@ -100,6 +80,16 @@ public class DriveTeleop extends BaseOpMode {
             mPlacing = false;
         } else if (gamepad2.right_stick_button) {
             mQueuing = !armSystem.moveOutToPosition(ArmSystem.Position.POSITION_WEST);
+        }
+
+        if (gamepad2.dpad_left) {
+            armSystem.moveWest();
+        } else if (gamepad2.dpad_right) {
+            armSystem.moveEast();
+        } else if (gamepad2.dpad_up) {
+            armSystem.moveNorth();
+        } else if (gamepad2.dpad_down) {
+            armSystem.moveSouth();
         }
 
         if (gamepad2.a && !gripped) {
