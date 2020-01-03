@@ -148,12 +148,10 @@ public class ArmSystem {
                 ensureIsAboveChassis();
                 break;
             case STATE_CLEAR_CHASSIS:
-                Log.d(TAG, "Entered clear chassis");
                 if (runSliderToTarget()) {
                     movePresetPosition(position);
                     mWaiting.reset();
                     mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
-                    Log.d(TAG, "reached raise");
                 }
                 break;
             case STATE_ADJUST_ORIENTATION:
@@ -161,13 +159,11 @@ public class ArmSystem {
                     openGripper();
                     setSliderHeight(position.getHeight());
                     mCurrentState = ArmState.STATE_SETTLE;
-                    Log.d(TAG, "reached waiting expired");
                 }
                 break;
             case STATE_SETTLE:
                 if (runSliderToTarget()) {
                     mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
-                    Log.d(TAG, "reached state settle");
                     return true;
                 }
                 break;
@@ -207,7 +203,6 @@ public class ArmSystem {
             setSliderHeight(2);
         } else {
             slider.setTargetPosition(slider.getCurrentPosition());
-            Log.d(TAG, "reached isAboveChassis");
         }
         mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
     }
@@ -254,7 +249,6 @@ public class ArmSystem {
     // Pos should be the # of blocks high it should be
     // MUST BE CALLED before runSliderToTarget
     public void setSliderHeight(double pos) {
-        // Log.d(TAG, "exists here");
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
         setPosTarget();
         slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
