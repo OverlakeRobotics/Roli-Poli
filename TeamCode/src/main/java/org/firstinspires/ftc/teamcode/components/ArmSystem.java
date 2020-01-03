@@ -175,7 +175,12 @@ public class ArmSystem {
     public boolean moveOutToPosition(Position position) {
         switch(mCurrentState) {
             case STATE_CHECK_CLEARANCE:
-                ensureIsAboveChassis();
+                if (mQueuePos < 2) {
+                    setSliderHeight(2);
+                } else {
+                    setSliderHeight(mQueuePos);
+                }
+                mCurrentState = ArmState.STATE_CLEAR_CHASSIS;
             case STATE_CLEAR_CHASSIS:
                 if (runSliderToTarget()) {
                     movePresetPosition(position);
@@ -184,9 +189,6 @@ public class ArmSystem {
                 }
                 break;
             case STATE_RAISE:
-                Log.d(TAG, "Checking if raised");
-                Log.d(TAG, "Slider Pos" + getSliderPos());
-                Log.d(TAG, "Target Pos" + slider.getTargetPosition());
                 if (runSliderToTarget()) {
                     Log.d(TAG, "Run");
                     incrementQueue();
@@ -326,9 +328,8 @@ public class ArmSystem {
         mCurrentState = ArmState.STATE_DROP;
     }
 
-
     private boolean areRoughlyEqual(int a, int b) {
-       return (a - 1 == b) || (a + 1 == b) || (a == b);
+        return Math.abs(Math.abs(a) - Math.abs(b)) < 10;
     }
 
 }
