@@ -267,17 +267,22 @@ public class ArmSystem {
 
     // Little helper method for setSliderHeight
     private int calculateHeight(double pos){
-        return (int) (pos == 0 ? mCalibrationDistance - 20 : mCalibrationDistance + (pos * INCREMENT_HEIGHT));
+        return (int) (pos == 0 ? mCalibrationDistance : mCalibrationDistance + (pos * INCREMENT_HEIGHT));
     }
 
     // Must be called every loop
     public boolean runSliderToTarget() {
+        Log.d(TAG, "Direction:" + mDirection);
+        Log.d(TAG, "Curr Pos" + slider.getCurrentPosition());
+        Log.d(TAG, "Target Pos" + slider.getTargetPosition());
         if (mDirection == ArmDirection.UP ? slider.getCurrentPosition() <  slider.getTargetPosition() :
                 slider.getCurrentPosition() > slider.getTargetPosition()) {
+            Log.d(TAG, "continuing power");
             slider.setPower(1.0);
             return false;
         } else {
             slider.setPower(0);
+            Log.d(TAG, "has ended power");
             mDirection = ArmDirection.IDLE;
             return true;
         }
