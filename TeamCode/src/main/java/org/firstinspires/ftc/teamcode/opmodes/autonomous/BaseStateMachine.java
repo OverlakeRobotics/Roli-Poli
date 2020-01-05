@@ -56,7 +56,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
     }
 
     private int skystoneOffset;
-    private static final int DEAD_RECKON_SKYSTONE = -20;
+    private static final int DEAD_RECKON_SKYSTONE = -30;
     private double alignStone;
     @Override
     public void loop() {
