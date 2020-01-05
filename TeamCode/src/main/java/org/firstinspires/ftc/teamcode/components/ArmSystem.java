@@ -66,8 +66,12 @@ public class ArmSystem {
         STATE_HOME,
         STATE_INITIAL,
     }
+    public enum ArmDirection {
+        UP, DOWN, IDLE
+    }
 
     private ArmState mCurrentState;
+    private ArmDirection mDirection;
 
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
     private int mCalibrationDistance;
@@ -110,6 +114,7 @@ public class ArmSystem {
         this.slider = slider;
         this.mCalibrationDistance = slider.getCurrentPosition();
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        this.slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
         mTargetHeight = 0;
         setSliderHeight(mTargetHeight);
@@ -251,7 +256,8 @@ public class ArmSystem {
     public void setSliderHeight(double pos) {
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
         setPosTarget();
-        slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        mDirection = slider.getCurrentPosition() > calculateHeight(mTargetHeight) ? ArmDirection.DOWN : ArmDirection.UP;
+        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     public void setSliderHeight(int pos) {
@@ -266,8 +272,15 @@ public class ArmSystem {
 
     // Must be called every loop
     public boolean runSliderToTarget() {
-        slider.setPower(1.0);
-        return areRoughlyEqual(slider.getCurrentPosition(), slider.getTargetPosition());
+        if (mDirection == ArmDirection.UP ? slider.getCurrentPosition() <  slider.getTargetPosition() :
+                slider.getCurrentPosition() > slider.getTargetPosition()) {
+            slider.setPower(1.0);
+            return false;
+        } else {
+            slider.setPower(0);
+            mDirection = ArmDirection.IDLE;
+            return true;
+        }
     }
 
     public int getSliderPos() {
@@ -331,7 +344,5 @@ public class ArmSystem {
     private boolean areRoughlyEqual(int a, int b) {
         return Math.abs(Math.abs(a) - Math.abs(b)) < 15;
     }
-
-    
 
 }
