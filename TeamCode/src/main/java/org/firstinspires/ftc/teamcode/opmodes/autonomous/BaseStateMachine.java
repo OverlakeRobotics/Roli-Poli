@@ -56,7 +56,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
     }
 
     private int skystoneOffset;
-    private static final int DEAD_RECKON_SKYSTONE = -20;
+    private static final int DEAD_RECKON_SKYSTONE = -30;
     private double alignStone;
     @Override
     public void loop() {
@@ -121,12 +121,14 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 // Align to prepare intake
                 if (driveSystem.driveToPosition(skystoneOffset, DriveSystem.Direction.FORWARD, 0.75)) {
                     armSystem.setSliderHeight(0.4);
+                    Log.d(TAG, "Curr Pos" + armSystem.getSliderPos());
                     newState(State.STATE_HORIZONTAL_ALIGN_SKYSTONE);
                 }
                 break;
 
             case STATE_HORIZONTAL_ALIGN_SKYSTONE:
                 armSystem.raise(1.0);
+                Log.d(TAG, "Curr Pos" + armSystem.getSliderPos());
                 if (currentTeam == Team.BLUE) {
                     if (driveSystem.driveToPosition(925, centerDirection, 0.7)) {
                         newState(State.STATE_INTAKE_SKYSTONE);
