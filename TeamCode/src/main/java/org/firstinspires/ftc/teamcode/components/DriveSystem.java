@@ -279,8 +279,12 @@ public class DriveSystem {
         // Go full speed until 60% there
         leftSpeed = Math.abs(error) > FULL_POWER_UNTIL ? speed : (speed * getSteer(error));
         // leftSpeed = speed * getSteer(error);
+        if (heading < 0) {
+            leftSpeed = leftSpeed * (-1);
+        }
 
 
+        Log.d(TAG, "Left Speed " + leftSpeed);
         if (leftSpeed < 0) {
             leftSpeed = Range.clip(leftSpeed, -1.0, -1.0 * MIN_SPEED);
         } else {
@@ -310,6 +314,7 @@ public class DriveSystem {
         while (robotDiff <= -180) {
             robotDiff += 360;
         }
+        Log.d(TAG,"Difference from initial 2: " + robotDiff);
         return robotDiff;
     }
 
