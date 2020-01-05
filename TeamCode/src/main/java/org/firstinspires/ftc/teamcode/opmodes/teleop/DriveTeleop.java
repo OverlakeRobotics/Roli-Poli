@@ -18,7 +18,8 @@ public class DriveTeleop extends BaseOpMode {
 
     private final double SLIDER_SPEED = 1;
     private boolean gripped, down, up;
-    private boolean mPlacing, mCapstoning, mHoming, mQueuing;
+    // private boolean mPlacing;
+    private boolean mCapstoning, mHoming, mQueuing;
     
     public void loop(){
         float rx = (float) Math.pow(gamepad1.right_stick_x, 3);
@@ -59,11 +60,14 @@ public class DriveTeleop extends BaseOpMode {
         }
 
 
+        /*
         if (gamepad2.b) {
             mPlacing = !armSystem.place();
         } else if (mPlacing) {
             mPlacing = !armSystem.place();
-        } else if (mHoming) {
+        }
+         */
+        if (mHoming) {
             mHoming = !armSystem.moveToHome();
         } else if (mCapstoning) {
             mCapstoning = !armSystem.moveToCapstone();
@@ -77,7 +81,7 @@ public class DriveTeleop extends BaseOpMode {
             mQueuing = false;
             mCapstoning = false;
             mHoming = false;
-            mPlacing = false;
+            // mPlacing = false;
         } else if (gamepad2.right_stick_button) {
             mQueuing = !armSystem.moveOutToPosition(ArmSystem.Position.POSITION_WEST);
         }

@@ -83,7 +83,7 @@ public class ArmSystem {
     private Deadline mWaiting;
 
     private final int MAX_HEIGHT = 6;
-    private final int INCREMENT_HEIGHT = 550; // how much the ticks increase when a block is added
+    private final int INCREMENT_HEIGHT = 535; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
     private final int WAIT_TIME = 450;
@@ -329,7 +329,9 @@ public class ArmSystem {
     }
 
     private boolean areRoughlyEqual(int a, int b) {
-        return Math.abs(Math.abs(a) - Math.abs(b)) < 10;
+        return Math.abs(Math.abs(a) - Math.abs(b)) < 15;
     }
+
+    
 
 }
