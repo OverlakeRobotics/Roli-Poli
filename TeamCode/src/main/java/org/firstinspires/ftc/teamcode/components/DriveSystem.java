@@ -279,10 +279,7 @@ public class DriveSystem {
         // Go full speed until 60% there
         leftSpeed = Math.abs(error) > FULL_POWER_UNTIL ? speed : (speed * getSteer(error));
         // leftSpeed = speed * getSteer(error);
-        if (heading < 0) {
-            leftSpeed = leftSpeed * (-1);
-        }
-
+        // leftSpeed = leftSpeed * (Math.signum(error));
 
         Log.d(TAG, "Left Speed " + leftSpeed);
         if (leftSpeed < 0) {
@@ -290,9 +287,11 @@ public class DriveSystem {
         } else {
             leftSpeed = Range.clip(leftSpeed, MIN_SPEED, 1.0);
         }
+
         // Send desired speeds to motors.
         tankDrive(leftSpeed, -leftSpeed);
-
+        Log.d(TAG, "Left Speed Post Tank Drive " + leftSpeed);
+        Log.d(TAG, "Left Power" + motors.get(MotorNames.FRONTLEFT).getPower());
         return false;
     }
 
