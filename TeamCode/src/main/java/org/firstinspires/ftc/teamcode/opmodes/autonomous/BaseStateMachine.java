@@ -56,7 +56,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
     }
 
     private int skystoneOffset;
-    private static final int DEAD_RECKON_SKYSTONE = -30;
+    private static final int DEAD_RECKON_SKYSTONE = 20;
     private double alignStone;
     @Override
     public void loop() {
@@ -181,7 +181,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_BACKUP_INTO_FOUNDATION:
-                if (driveSystem.driveToPosition(250, DriveSystem.Direction.BACKWARD, 0.75)) {
+                if (driveSystem.driveToPosition(320, DriveSystem.Direction.BACKWARD, 0.75)) {
                     latchSystem.bothDown();
                     armSystem.setSliderHeight(2.0);
                     newState(State.STATE_RAISE_ARM);
@@ -206,7 +206,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_MOVE_INTO_WALL:
                 armSystem.runSliderToTarget();
-                if (driveSystem.driveToPosition(700, DriveSystem.Direction.FORWARD, 0.75)) {
+                if (driveSystem.driveToPosition(750, DriveSystem.Direction.FORWARD, 0.75)) {
                     armSystem.openGripper();
                     latchSystem.bothUp();
                     armSystem.moveToHome();
