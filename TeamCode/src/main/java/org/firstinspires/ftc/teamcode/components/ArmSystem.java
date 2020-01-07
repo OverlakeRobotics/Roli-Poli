@@ -129,7 +129,7 @@ public class ArmSystem {
     }
 
     // Go to "north" position
-    public void moveNorth () {
+    public void moveNorth() {
         movePresetPosition(Position.POSITION_NORTH);
     }
 
@@ -193,18 +193,18 @@ public class ArmSystem {
                     mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
                 }
                 break;
+            case STATE_ADJUST_ORIENTATION:
+                if(mWaiting.hasExpired()) {
+                    setSliderHeight(mQueuePos);
+                    mCurrentState = ArmState.STATE_RAISE;
+                }
+                break;
             case STATE_RAISE:
                 if (runSliderToTarget()) {
                     Log.d(TAG, "Run");
                     incrementQueue();
                     mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
                     return true;
-                }
-                break;
-            case STATE_ADJUST_ORIENTATION:
-                if(mWaiting.hasExpired()) {
-                    setSliderHeight(mQueuePos);
-                    mCurrentState = ArmState.STATE_RAISE;
                 }
                 break;
         }
