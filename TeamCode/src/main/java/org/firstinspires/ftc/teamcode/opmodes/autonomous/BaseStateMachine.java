@@ -55,8 +55,36 @@ public abstract class BaseStateMachine extends BaseAutonomous {
         newState(State.STATE_INITIAL);
     }
 
+//    public void init_loop() {
+//        if (recognitions != null) {
+//            for (Recognition recognition : recognitions) {
+//                if (recognition.getLabel().equalsIgnoreCase("Skystone")) {
+//                    double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
+//                    int sign = (int) Math.signum(degrees);
+//                    int currOffset = sign * (int) (320 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
+//                    currOffset -= 215;
+//                    // The skystone detected is one of the first three which means that
+//                    // the second skystone must be farthest from the audience
+//                    distances.add(currOffset);
+//                }
+//            }
+//            // Set max to minimum value
+//            int maxDistance = Integer.MIN_VALUE;
+//            for (int value : distances) {
+//                maxDistance = Math.max(maxDistance, value);
+//            }
+//            // Set the skystoneOffset to be the maximum value
+//            skystoneOffset = maxDistance;
+//            // If the magnitude of the distance is greater than -360 the skystone is the
+//            // first one
+//            if (skystoneOffset < -245) {
+//                skystoneOffset = DEAD_RECKON_SKYSTONE;
+//            }
+//        }
+//    }
+
     private int skystoneOffset;
-    private static final int DEAD_RECKON_SKYSTONE = 20;
+    private static final int DEAD_RECKON_SKYSTONE = -10;
     private double alignStone;
     @Override
     public void loop() {
@@ -86,8 +114,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                         if (recognition.getLabel().equalsIgnoreCase("Skystone")) {
                             double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
                             int sign = (int) Math.signum(degrees);
-                            int currOffset = sign * (int) (320 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
-                            currOffset -= 215;
+                            int currOffset = sign * (int) (700 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
                             // The skystone detected is one of the first three which means that
                             // the second skystone must be farthest from the audience
                             distances.add(currOffset);
@@ -102,16 +129,11 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                     skystoneOffset = maxDistance;
                     // If the magnitude of the distance is greater than -360 the skystone is the
                     // first one
-                    if (skystoneOffset < -245) {
-                        skystoneOffset = DEAD_RECKON_SKYSTONE;
-                    }
                 } else {
                     skystoneOffset = DEAD_RECKON_SKYSTONE;
                 }
-                // Blue strafing is worse so increase the value slightly
-                if (currentTeam == Team.BLUE) {
-                    skystoneOffset *= 1.05;
-                }
+
+                skystoneOffset = skystoneOffset > 0 ? DEAD_RECKON_SKYSTONE : skystoneOffset;
                 newState(State.STATE_ALIGN_SKYSTONE);
                 Log.d(TAG, "Skystone offset: " + skystoneOffset);
                 Log.d(TAG, "Distances: " + distances.toString());
@@ -151,7 +173,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
             case STATE_ALIGN_BRIDGE:
                 armSystem.runSliderToTarget();
                 intakeSystem.suck();
-                if (driveSystem.driveToPosition(625, outsideDirection, 1.0)) {
+                if (driveSystem.driveToPosition(300, outsideDirection, 1.0)) {
                     armSystem.setSliderHeight(0.0);
                     newState(State.STATE_REALIGN_HEADING);
                 }
@@ -175,13 +197,13 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_TURN_FOR_FOUNDATION:
                 int sign = currentTeam == Team.RED ? 1 : -1;
-                if (driveSystem.turnAbsolute(85 * sign, 1.0)) {
+                if (driveSystem.turnAbsolute(90 * sign, 1.0)) {
                     newState(State.STATE_BACKUP_INTO_FOUNDATION);
                 }
                 break;
 
             case STATE_BACKUP_INTO_FOUNDATION:
-                if (driveSystem.driveToPosition(320, DriveSystem.Direction.BACKWARD, 0.75)) {
+                if (driveSystem.driveToPosition(100, DriveSystem.Direction.BACKWARD, 0.6)) {
                     latchSystem.bothDown();
                     armSystem.setSliderHeight(2.0);
                     newState(State.STATE_RAISE_ARM);
@@ -206,7 +228,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_MOVE_INTO_WALL:
                 armSystem.runSliderToTarget();
-                if (driveSystem.driveToPosition(750, DriveSystem.Direction.FORWARD, 0.75)) {
+                if (driveSystem.driveToPosition(680, DriveSystem.Direction.FORWARD, 0.75)) {
                     armSystem.openGripper();
                     latchSystem.bothUp();
                     armSystem.moveToHome();

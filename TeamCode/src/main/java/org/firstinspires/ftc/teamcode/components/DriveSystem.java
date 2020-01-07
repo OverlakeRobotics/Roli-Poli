@@ -26,7 +26,7 @@ public class DriveSystem {
     // Gives the point at which to switch to less than full power
     public static final double FULL_POWER_UNTIL = 30;
     // Minimum speed to complete the turn
-    public static final double MIN_SPEED = 0.24;
+    public static final double MIN_SPEED = 0.27;
     // 12.6 inches circumference of a wheel
     // 319 mm circumference of a wheel
     // 1120 ticks in a revolution
@@ -268,6 +268,7 @@ public class DriveSystem {
 
         // determine turn power based on +/- error
         double error = computeDegreesDiff();
+        Log.d(TAG, "Error: " + error);
 
         // If it gets there: stop
         if (Math.abs(error) <= HEADING_THRESHOLD) {
@@ -277,11 +278,9 @@ public class DriveSystem {
         }
 
         // Go full speed until 60% there
-        leftSpeed = Math.abs(error) > FULL_POWER_UNTIL ? speed : (speed * getSteer(error));
-        // leftSpeed = speed * getSteer(error);
-        // leftSpeed = leftSpeed * (Math.signum(error));
+        leftSpeed = Math.abs(error) / 75.0;
 
-        Log.d(TAG, "Left Speed " + leftSpeed);
+        Log.d(TAG, "Left Speed: " + leftSpeed);
         if (leftSpeed < 0) {
             leftSpeed = Range.clip(leftSpeed, -1.0, -1.0 * MIN_SPEED);
         } else {
@@ -289,7 +288,7 @@ public class DriveSystem {
         }
 
         // Send desired speeds to motors.
-        tankDrive(leftSpeed, -leftSpeed);
+        tankDrive(leftSpeed * Math.signum(error), -leftSpeed * Math.signum(error));
         Log.d(TAG, "Left Speed Post Tank Drive " + leftSpeed);
         Log.d(TAG, "Left Power" + motors.get(MotorNames.FRONTLEFT).getPower());
         return false;
