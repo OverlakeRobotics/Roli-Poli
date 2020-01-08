@@ -26,7 +26,7 @@ public class DriveSystem {
     // Gives the point at which to switch to less than full power
     public static final double FULL_POWER_UNTIL = 30;
     // Minimum speed to complete the turn
-    public static final double MIN_SPEED = 0.27;
+    public static final double MIN_SPEED = 0.35;
     // 12.6 inches circumference of a wheel
     // 319 mm circumference of a wheel
     // 1120 ticks in a revolution
@@ -278,7 +278,7 @@ public class DriveSystem {
         }
 
         // Go full speed until 60% there
-        leftSpeed = Math.abs(error) / 75.0;
+        leftSpeed = Math.abs(error) / 100.0;
 
         Log.d(TAG, "Left Speed: " + leftSpeed);
         if (leftSpeed < 0) {
