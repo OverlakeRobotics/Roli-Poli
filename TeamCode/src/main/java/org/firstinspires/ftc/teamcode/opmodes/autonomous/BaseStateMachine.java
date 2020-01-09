@@ -13,7 +13,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
     public enum State {
         STATE_INITIAL,
         STATE_FIND_SKYSTONE,
-        STATE_BACKUP_SLIGHTLY_FROM_WALL,
+        STATE_ALIGN_FOR_WALL,
         STATE_ALIGN_SKYSTONE,
         STATE_ROTATE_ARM,
         STATE_HORIZONTAL_ALIGN_SKYSTONE,
@@ -41,7 +41,8 @@ public abstract class BaseStateMachine extends BaseAutonomous {
         STATE_MOVE_PAST_COLOR_LINE,
         LOGGING,
         STATE_REALIGN_HEADING,
-        STATE_PARK_AT_LINE,
+        MOVE_BACKWARDS_AFTER_FOUNDATION,
+        STRAFE_ONTO_LINE
     }
 
     private final static String TAG = "BaseStateMachine";
@@ -56,7 +57,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
     }
 
     private int skystoneOffset;
-    private static final int DEAD_RECKON_SKYSTONE = -30;
+    private static final int DEAD_RECKON_SKYSTONE = 20;
     private double alignStone;
     @Override
     public void loop() {
@@ -84,10 +85,12 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 if (recognitions != null) {
                     for (Recognition recognition : recognitions) {
                         if (recognition.getLabel().equalsIgnoreCase("Skystone")) {
-                            double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
-                            int sign = (int) Math.signum(degrees);
-                            int currOffset = sign * (int) (320 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
-                            currOffset -= 215;
+                            double radians = recognition.estimateAngleToObject(AngleUnit.RADIANS);
+                            radians = currentTeam == Team.BLUE ? -radians : radians;
+                            Log.d(TAG, "Radians: " + radians);
+                            int currOffset = (int) ((currentTeam == Team.RED ? 290 : 290) * (Math.tan(radians)));
+                            currOffset -= currentTeam == Team.RED ? 195 : 195;
+                            Log.d(TAG, "Offset: " + currOffset);
                             // The skystone detected is one of the first three which means that
                             // the second skystone must be farthest from the audience
                             distances.add(currOffset);
@@ -100,17 +103,13 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                     }
                     // Set the skystoneOffset to be the maximum value
                     skystoneOffset = maxDistance;
-                    // If the magnitude of the distance is greater than -360 the skystone is the
-                    // first one
-                    if (skystoneOffset < -245) {
-                        skystoneOffset = DEAD_RECKON_SKYSTONE;
-                    }
                 } else {
                     skystoneOffset = DEAD_RECKON_SKYSTONE;
                 }
-                // Blue strafing is worse so increase the value slightly
-                if (currentTeam == Team.BLUE) {
-                    skystoneOffset *= 1.05;
+
+                skystoneOffset = skystoneOffset > 0 ? DEAD_RECKON_SKYSTONE : skystoneOffset;
+                if (skystoneOffset > -80 || skystoneOffset < -280) {
+                    skystoneOffset = DEAD_RECKON_SKYSTONE;
                 }
                 newState(State.STATE_ALIGN_SKYSTONE);
                 Log.d(TAG, "Skystone offset: " + skystoneOffset);
@@ -127,21 +126,14 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_HORIZONTAL_ALIGN_SKYSTONE:
-                armSystem.raise(1.0);
-                Log.d(TAG, "Curr Pos" + armSystem.getSliderPos());
-                if (currentTeam == Team.BLUE) {
-                    if (driveSystem.driveToPosition(925, centerDirection, 0.7)) {
-                        newState(State.STATE_INTAKE_SKYSTONE);
-                    }
-                } else {
-                    if (driveSystem.driveToPosition(925, centerDirection, 0.7)) {
-                        newState(State.STATE_INTAKE_SKYSTONE);
-                    }
+                armSystem.runSliderToTarget();
+                if (driveSystem.driveToPosition(975, centerDirection, 0.7)) {
+                    newState(State.STATE_INTAKE_SKYSTONE);
                 }
                 break;
 
             case STATE_INTAKE_SKYSTONE:
-                armSystem.raise(1.0);
+                armSystem.runSliderToTarget();
                 intakeSystem.suck();
                 if (driveSystem.driveToPosition(200, DriveSystem.Direction.FORWARD, 0.2)) {
                     newState(State.STATE_ALIGN_BRIDGE);
@@ -149,18 +141,18 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_ALIGN_BRIDGE:
-                armSystem.raise(1.0);
+                armSystem.runSliderToTarget();
                 intakeSystem.suck();
-                if (driveSystem.driveToPosition(625, outsideDirection, 1.0)) {
+                if (driveSystem.driveToPosition(340, outsideDirection, 1.0)) {
                     armSystem.setSliderHeight(0.0);
                     newState(State.STATE_REALIGN_HEADING);
                 }
                 break;
 
             case STATE_REALIGN_HEADING:
-                armSystem.raise(1.0);
+                armSystem.runSliderToTarget();
                 intakeSystem.suck();
-                if (driveSystem.turnAbsolute(3, 1.0)) {
+                if (driveSystem.turnAbsolute(currentTeam == Team.RED ? 6 : 2, 1.0)) {
                     intakeSystem.stop();
                     armSystem.closeGripper();
                     newState(State.STATE_MOVE_PAST_LINE);
@@ -181,7 +173,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_BACKUP_INTO_FOUNDATION:
-                if (driveSystem.driveToPosition(250, DriveSystem.Direction.BACKWARD, 0.75)) {
+                if (driveSystem.driveToPosition(215, DriveSystem.Direction.BACKWARD, 0.6)) {
                     latchSystem.bothDown();
                     armSystem.setSliderHeight(2.0);
                     newState(State.STATE_RAISE_ARM);
@@ -189,73 +181,77 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_RAISE_ARM:
-                armSystem.raise(1.0);
-                if (mStateTime.milliseconds() > 500) {
+                armSystem.runSliderToTarget();
+                if (mStateTime.milliseconds() > 300) {
                     armSystem.moveNorth();
                     newState(State.STATE_ROTATE_ARM);
                 }
                 break;
 
             case STATE_ROTATE_ARM:
-                armSystem.raise(1.0);
-                if (mStateTime.milliseconds() > 500) {
+                armSystem.runSliderToTarget();
+                if (mStateTime.milliseconds() > 400) {
                     armSystem.setSliderHeight(0.0);
+                    newState(State.STATE_ALIGN_FOR_WALL);
+                }
+                break;
+
+            case STATE_ALIGN_FOR_WALL:
+                sign = currentTeam == Team.RED ? 1 : -1;
+                if (driveSystem.turnAbsolute(85 * sign, 1.0)) {
                     newState(State.STATE_MOVE_INTO_WALL);
                 }
                 break;
 
             case STATE_MOVE_INTO_WALL:
-                armSystem.raise(1.0);
-                if (driveSystem.driveToPosition(700, DriveSystem.Direction.FORWARD, 0.75)) {
+                armSystem.runSliderToTarget();
+                if (driveSystem.driveToPosition(730, DriveSystem.Direction.FORWARD, 0.75)) {
                     armSystem.openGripper();
                     latchSystem.bothUp();
-                    armSystem.moveHome();
+                    armSystem.moveToHome();
                     newState(State.STATE_RAISE_ARM_FOR_HOME);
                 }
                 break;
 
             case STATE_RAISE_ARM_FOR_HOME:
-                if (armSystem.isHoming()) {
-                    armSystem.autoHome();
-                } else {
-                    newState(State.STATE_PARK_AT_LINE);
-                }
-                break;
-
-            case STATE_BACKUP_SLIGHTLY_FROM_WALL:
-                if (driveSystem.driveToPosition(15, DriveSystem.Direction.BACKWARD, 1.0)) {
-                    newState(State.STATE_PARK_AT_LINE);
-                }
-                break;
-
-            case STATE_PARK_AT_LINE:
-//                if (currentTeam == Team.RED) {
-//                    if (colorSensor.red() > colorSensor.blue() * 1.25) {
-//                        driveSystem.stopAndReset();
-//                        newState(State.STATE_COMPLETE);
-//                        break;
-//                    }
-//                } else {
-//                    if (colorSensor.blue() > colorSensor.red() * 1.25) {
-//                        driveSystem.stopAndReset();
-//                        newState(State.STATE_COMPLETE);
-//                        break;
-//                    }
-//                }
-//                Log.d(TAG, "Blue: " + colorSensor.blue() + " Red: " + colorSensor.red());
-                if (driveSystem.driveToPosition(1100, outsideDirection, 0.6)) {
-                    newState(State.STATE_COMPLETE);
+                if (armSystem.moveToHome()) {
+                    newState(State.STATE_STRAFE_AWAY_FROM_FOUNDATION);
                 }
                 break;
 
             case STATE_STRAFE_AWAY_FROM_FOUNDATION:
-                if (armSystem.isHoming()) {
-                    armSystem.autoHome();
-                }
-                if (driveSystem.driveToPosition(500, outsideDirection, 1.0)) {
-                    newState(State.STATE_TURN_FOR_BACKUP);
+                if (driveSystem.driveToPosition(770, outsideDirection, 1.0)) {
+                    newState(State.MOVE_BACKWARDS_AFTER_FOUNDATION);
                 }
                 break;
+
+            case MOVE_BACKWARDS_AFTER_FOUNDATION:
+                if (driveSystem.driveToPosition(435, DriveSystem.Direction.BACKWARD, 1.0)) {
+                    newState(State.STRAFE_ONTO_LINE);
+                }
+                break;
+
+            case STRAFE_ONTO_LINE:
+                if (driveSystem.driveToPosition(500, outsideDirection, 1.0)) {
+                    newState(State.STATE_COMPLETE);
+                }
+                break;
+
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
+            //
 
             case STATE_TURN_FOR_BACKUP:
                 if (driveSystem.turnAbsolute(0, 1.0)) {
