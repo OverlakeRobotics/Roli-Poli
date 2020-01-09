@@ -275,17 +275,8 @@ public class ArmSystem {
         Log.d(TAG, "Direction:" + mDirection);
         Log.d(TAG, "Curr Pos" + slider.getCurrentPosition());
         Log.d(TAG, "Target Pos" + slider.getTargetPosition());
-        
-        boolean isPast;
-        if (mDirection == ArmDirection.UP) {
-            isPast = slider.getCurrentPosition() <  slider.getTargetPosition();
-        } else if (mDirection == ArmDirection.DOWN) {
-            isPast = slider.getCurrentPosition() > slider.getTargetPosition();
-        } else {
-            return true;
-        }
-
-        if (isPast) {
+        if ((mDirection == ArmDirection.UP && slider.getCurrentPosition() <  slider.getTargetPosition()) ||
+                (mDirection == ArmDirection.DOWN && slider.getCurrentPosition() > slider.getTargetPosition())) {
             Log.d(TAG, "continuing power");
             slider.setPower(1.0);
             return false;
