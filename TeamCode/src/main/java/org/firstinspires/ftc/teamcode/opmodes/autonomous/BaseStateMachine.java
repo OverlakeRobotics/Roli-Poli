@@ -29,6 +29,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
         STATE_STRAFE_AWAY_FROM_FOUNDATION,
         STATE_MOVE_INTO_WALL,
         STATE_RAISE_ARM_FOR_HOME,
+        STATE_GO_HOME,
         STATE_ALIGN_FOR_BRIDGE,
         STATE_FIND_STONE,
         STATE_APPROACH_STONE,
@@ -53,12 +54,14 @@ public abstract class BaseStateMachine extends BaseAutonomous {
         super.init(team);
         this.msStuckDetectInit = 15000;
         this.msStuckDetectInitLoop = 15000;
+        wait = new ElapsedTime();
         newState(State.STATE_INITIAL);
     }
 
     private int skystoneOffset;
     private static final int DEAD_RECKON_SKYSTONE = 20;
     private double alignStone;
+    private ElapsedTime wait;
     @Override
     public void loop() {
         telemetry.addData("State", mCurrentState);
@@ -181,16 +184,16 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_RAISE_ARM:
-                armSystem.runSliderToTarget();
-                if (mStateTime.milliseconds() > 300) {
+                if (armSystem.runSliderToTarget()) {
                     armSystem.moveNorth();
+                    wait.reset();
                     newState(State.STATE_ROTATE_ARM);
                 }
                 break;
 
             case STATE_ROTATE_ARM:
                 armSystem.runSliderToTarget();
-                if (mStateTime.milliseconds() > 400) {
+                if (wait.milliseconds() > 250) {
                     armSystem.setSliderHeight(0.0);
                     newState(State.STATE_ALIGN_FOR_WALL);
                 }
@@ -205,33 +208,36 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_MOVE_INTO_WALL:
                 armSystem.runSliderToTarget();
-                if (driveSystem.driveToPosition(730, DriveSystem.Direction.FORWARD, 0.75)) {
+                if (driveSystem.driveToPosition(700, DriveSystem.Direction.FORWARD, 0.75)) {
                     armSystem.openGripper();
                     latchSystem.bothUp();
                     armSystem.moveToHome();
-                    newState(State.STATE_RAISE_ARM_FOR_HOME);
+                    newState(State.STATE_GO_HOME);
                 }
                 break;
 
-            case STATE_RAISE_ARM_FOR_HOME:
+            case STATE_GO_HOME:
                 if (armSystem.moveToHome()) {
                     newState(State.STATE_STRAFE_AWAY_FROM_FOUNDATION);
                 }
                 break;
 
             case STATE_STRAFE_AWAY_FROM_FOUNDATION:
+                armSystem.runSliderToTarget();
                 if (driveSystem.driveToPosition(770, outsideDirection, 1.0)) {
                     newState(State.MOVE_BACKWARDS_AFTER_FOUNDATION);
                 }
                 break;
 
             case MOVE_BACKWARDS_AFTER_FOUNDATION:
+                armSystem.runSliderToTarget();
                 if (driveSystem.driveToPosition(435, DriveSystem.Direction.BACKWARD, 1.0)) {
                     newState(State.STRAFE_ONTO_LINE);
                 }
                 break;
 
             case STRAFE_ONTO_LINE:
+                armSystem.runSliderToTarget();
                 if (driveSystem.driveToPosition(500, outsideDirection, 1.0)) {
                     newState(State.STATE_COMPLETE);
                 }
