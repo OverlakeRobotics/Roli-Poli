@@ -41,7 +41,6 @@ public abstract class BaseStateMachine extends BaseAutonomous {
         STATE_MOVE_PAST_COLOR_LINE,
         LOGGING,
         STATE_REALIGN_HEADING,
-        STATE_PARK_AT_LINE,
         MOVE_BACKWARDS_AFTER_FOUNDATION,
         STRAFE_ONTO_LINE
     }
@@ -56,34 +55,6 @@ public abstract class BaseStateMachine extends BaseAutonomous {
         this.msStuckDetectInitLoop = 15000;
         newState(State.STATE_INITIAL);
     }
-
-//    public void init_loop() {
-//        if (recognitions != null) {
-//            for (Recognition recognition : recognitions) {
-//                if (recognition.getLabel().equalsIgnoreCase("Skystone")) {
-//                    double degrees = recognition.estimateAngleToObject(AngleUnit.DEGREES);
-//                    int sign = (int) Math.signum(degrees);
-//                    int currOffset = sign * (int) (320 * (Math.sin(Math.abs(degrees * Math.PI / 180))));
-//                    currOffset -= 215;
-//                    // The skystone detected is one of the first three which means that
-//                    // the second skystone must be farthest from the audience
-//                    distances.add(currOffset);
-//                }
-//            }
-//            // Set max to minimum value
-//            int maxDistance = Integer.MIN_VALUE;
-//            for (int value : distances) {
-//                maxDistance = Math.max(maxDistance, value);
-//            }
-//            // Set the skystoneOffset to be the maximum value
-//            skystoneOffset = maxDistance;
-//            // If the magnitude of the distance is greater than -360 the skystone is the
-//            // first one
-//            if (skystoneOffset < -245) {
-//                skystoneOffset = DEAD_RECKON_SKYSTONE;
-//            }
-//        }
-//    }
 
     private int skystoneOffset;
     private static final int DEAD_RECKON_SKYSTONE = 20;
@@ -115,9 +86,10 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                     for (Recognition recognition : recognitions) {
                         if (recognition.getLabel().equalsIgnoreCase("Skystone")) {
                             double radians = recognition.estimateAngleToObject(AngleUnit.RADIANS);
+                            radians = currentTeam == Team.BLUE ? -radians : radians;
                             Log.d(TAG, "Radians: " + radians);
-                            int currOffset = (int) (290 * (Math.tan(radians)));
-                            currOffset -= 195;
+                            int currOffset = (int) ((currentTeam == Team.RED ? 290 : 290) * (Math.tan(radians)));
+                            currOffset -= currentTeam == Team.RED ? 195 : 195;
                             Log.d(TAG, "Offset: " + currOffset);
                             // The skystone detected is one of the first three which means that
                             // the second skystone must be farthest from the audience
@@ -131,8 +103,6 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                     }
                     // Set the skystoneOffset to be the maximum value
                     skystoneOffset = maxDistance;
-                    // If the magnitude of the distance is greater than -360 the skystone is the
-                    // first one
                 } else {
                     skystoneOffset = DEAD_RECKON_SKYSTONE;
                 }
@@ -182,7 +152,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
             case STATE_REALIGN_HEADING:
                 armSystem.runSliderToTarget();
                 intakeSystem.suck();
-                if (driveSystem.turnAbsolute(currentTeam == Team.RED ? 6 : -6, 1.0)) {
+                if (driveSystem.turnAbsolute(currentTeam == Team.RED ? 6 : 2, 1.0)) {
                     intakeSystem.stop();
                     armSystem.closeGripper();
                     newState(State.STATE_MOVE_PAST_LINE);

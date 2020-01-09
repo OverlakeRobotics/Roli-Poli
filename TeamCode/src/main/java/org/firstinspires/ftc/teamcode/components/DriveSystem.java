@@ -26,7 +26,7 @@ public class DriveSystem {
     // Gives the point at which to switch to less than full power
     public static final double FULL_POWER_UNTIL = 30;
     // Minimum speed to complete the turn
-    public static final double MIN_SPEED = 0.35;
+    public static final double MIN_SPEED = 0.37;
     // 12.6 inches circumference of a wheel
     // 319 mm circumference of a wheel
     // 1120 ticks in a revolution
