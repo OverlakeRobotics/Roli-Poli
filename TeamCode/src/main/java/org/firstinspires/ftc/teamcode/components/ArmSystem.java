@@ -257,7 +257,11 @@ public class ArmSystem {
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
         setPosTarget();
         mDirection = slider.getCurrentPosition() > calculateHeight(mTargetHeight) ? ArmDirection.DOWN : ArmDirection.UP;
-        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        if (mDirection == ArmDirection.IDLE) {
+            slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        } else {
+            slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
     }
 
     public void setSliderHeight(int pos) {
@@ -286,6 +290,8 @@ public class ArmSystem {
             slider.setPower(0);
             Log.d(TAG, "has ended power");
             mDirection = ArmDirection.IDLE;
+            slider.setTargetPosition(slider.getCurrentPosition());
+            slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             return true;
         }
     }
