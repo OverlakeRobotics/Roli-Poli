@@ -256,7 +256,14 @@ public class ArmSystem {
     public void setSliderHeight(double pos) {
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
         setPosTarget();
-        mDirection = slider.getCurrentPosition() > calculateHeight(mTargetHeight) ? ArmDirection.DOWN : ArmDirection.UP;
+        if (slider.getCurrentPosition() == calculateHeight(mTargetHeight)) {
+            mDirection = ArmDirection.IDLE;
+            return;
+        } else if (slider.getCurrentPosition() > calculateHeight(mTargetHeight)) {
+            mDirection = ArmDirection.DOWN;
+        } else {
+            mDirection = ArmDirection.UP;
+        }
         slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
@@ -268,6 +275,10 @@ public class ArmSystem {
     // Little helper method for setSliderHeight
     private int calculateHeight(double pos){
         return (int) (pos == 0 ? mCalibrationDistance : mCalibrationDistance + (pos * INCREMENT_HEIGHT));
+    }
+
+    private double reverseCalcHeight(double pos) {
+        return  Math.round(pos/INCREMENT_HEIGHT);
     }
 
     // Must be called every loop
@@ -284,7 +295,11 @@ public class ArmSystem {
         if ((mDirection == ArmDirection.UP && slider.getCurrentPosition() <  slider.getTargetPosition()) ||
                 (mDirection == ArmDirection.DOWN && slider.getCurrentPosition() > slider.getTargetPosition())) {
             Log.d(TAG, "continuing power");
-            slider.setPower(1.0);
+            if (mDirection == ArmDirection.UP) {
+                slider.setPower(1.0);
+            } else {
+                slider.setPower(-1.0);
+            }
             return false;
         } else {
             Log.d(TAG, "has ended power");
