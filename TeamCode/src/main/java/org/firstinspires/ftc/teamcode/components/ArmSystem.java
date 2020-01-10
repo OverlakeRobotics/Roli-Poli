@@ -275,7 +275,9 @@ public class ArmSystem {
         Log.d(TAG, "Direction:" + mDirection);
         Log.d(TAG, "Curr Pos" + slider.getCurrentPosition());
         Log.d(TAG, "Target Pos" + slider.getTargetPosition());
-        if ((mDirection == ArmDirection.UP && slider.getCurrentPosition() <  slider.getTargetPosition()) ||
+        if (mDirection == ArmDirection.IDLE) {
+            return true;
+        } else if ((mDirection == ArmDirection.UP && slider.getCurrentPosition() <  slider.getTargetPosition()) ||
                 (mDirection == ArmDirection.DOWN && slider.getCurrentPosition() > slider.getTargetPosition())) {
             Log.d(TAG, "continuing power");
             slider.setPower(1.0);
