@@ -87,7 +87,7 @@ public class ArmSystem {
     private Deadline mWaiting;
 
     private final int MAX_HEIGHT = 6;
-    private final int INCREMENT_HEIGHT = 535; // how much the ticks increase when a block is added
+    private final int INCREMENT_HEIGHT = 525; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
     private final int WAIT_TIME = 450;
@@ -283,26 +283,19 @@ public class ArmSystem {
 
     // Must be called every loop
     public boolean runSliderToTarget() {
-        Log.d(TAG, "Direction:" + mDirection);
-        Log.d(TAG, "Curr Pos" + slider.getCurrentPosition());
-        Log.d(TAG, "Target Pos" + slider.getTargetPosition());
         if (mDirection == ArmDirection.IDLE) {
             return true;
         } else {
             slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
-        if ((mDirection == ArmDirection.UP && slider.getCurrentPosition() <  slider.getTargetPosition()) ||
-                (mDirection == ArmDirection.DOWN && slider.getCurrentPosition() > slider.getTargetPosition())) {
-            Log.d(TAG, "continuing power");
-            if (mDirection == ArmDirection.UP) {
-                slider.setPower(1.0);
-            } else {
-                slider.setPower(-1.0);
-            }
+        if (mDirection == ArmDirection.UP && slider.getCurrentPosition() <  slider.getTargetPosition()){
+            slider.setPower(1.0);
+            return false;
+        } else if (mDirection == ArmDirection.DOWN && slider.getCurrentPosition() > slider.getTargetPosition()) {
+            slider.setPower(-1.0);
             return false;
         } else {
-            Log.d(TAG, "has ended power");
             mDirection = ArmDirection.IDLE;
             slider.setTargetPosition(slider.getCurrentPosition());
             slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
