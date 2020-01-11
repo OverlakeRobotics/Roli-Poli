@@ -278,14 +278,10 @@ public class DriveSystem {
         }
 
         // Go full speed until 60% there
-        leftSpeed = Math.abs(error) / 100.0;
+        leftSpeed = Math.abs(error) / 125.0;
 
         Log.d(TAG, "Left Speed: " + leftSpeed);
-        if (leftSpeed < 0) {
-            leftSpeed = Range.clip(leftSpeed, -1.0, -1.0 * MIN_SPEED);
-        } else {
-            leftSpeed = Range.clip(leftSpeed, MIN_SPEED, 1.0);
-        }
+        leftSpeed = Range.clip(leftSpeed, MIN_SPEED, 1.0);
 
         // Send desired speeds to motors.
         tankDrive(leftSpeed * Math.signum(error), -leftSpeed * Math.signum(error));

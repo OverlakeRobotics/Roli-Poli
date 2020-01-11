@@ -181,8 +181,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                 break;
 
             case STATE_RAISE_ARM:
-                armSystem.runSliderToTarget();
-                if (mStateTime.milliseconds() > 300) {
+                if (armSystem.runSliderToTarget()) {
                     armSystem.moveNorth();
                     newState(State.STATE_ROTATE_ARM);
                 }
@@ -205,7 +204,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_MOVE_INTO_WALL:
                 armSystem.runSliderToTarget();
-                if (driveSystem.driveToPosition(currentTeam == Team.RED ? 730 : 710, DriveSystem.Direction.FORWARD, 0.75)) {
+                if (driveSystem.driveToPosition(currentTeam == Team.RED ? 720 : 710, DriveSystem.Direction.FORWARD, 0.75)) {
                     armSystem.openGripper();
                     latchSystem.bothUp();
                     armSystem.moveToHome();
