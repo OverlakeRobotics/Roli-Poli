@@ -152,7 +152,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
             case STATE_REALIGN_HEADING:
                 armSystem.runSliderToTarget();
                 intakeSystem.suck();
-                if (driveSystem.turnAbsolute(currentTeam == Team.RED ? 6 : 2, 1.0)) {
+                if (driveSystem.turnAbsolute(currentTeam == Team.RED ? 6 : 4, 1.0)) {
                     intakeSystem.stop();
                     armSystem.closeGripper();
                     newState(State.STATE_MOVE_PAST_LINE);
@@ -205,7 +205,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case STATE_MOVE_INTO_WALL:
                 armSystem.runSliderToTarget();
-                if (driveSystem.driveToPosition(730, DriveSystem.Direction.FORWARD, 0.75)) {
+                if (driveSystem.driveToPosition(currentTeam == Team.RED ? 730 : 710, DriveSystem.Direction.FORWARD, 0.75)) {
                     armSystem.openGripper();
                     latchSystem.bothUp();
                     armSystem.moveToHome();
