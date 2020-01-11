@@ -26,7 +26,7 @@ public class DriveSystem {
     // Gives the point at which to switch to less than full power
     public static final double FULL_POWER_UNTIL = 30;
     // Minimum speed to complete the turn
-    public static final double MIN_SPEED = 0.22;
+    public static final double MIN_SPEED = 0.37;
     // 12.6 inches circumference of a wheel
     // 319 mm circumference of a wheel
     // 1120 ticks in a revolution
@@ -34,7 +34,7 @@ public class DriveSystem {
     private final double TICKS_IN_MM = 3.51;
     public static final double STRAFE_COEFF = 0.09;
     public static final String TAG = "DriveSystem";
-    public static final double P_TURN_COEFF = 0.018;     // Larger is more responsive, but also less stable
+    public static final double P_TURN_COEFF = 0.012;     // Larger is more responsive, but also less stable
     public static final double HEADING_THRESHOLD = 1 ;      // As tight as we can make it with an integer gyro
 
     public EnumMap<MotorNames, DcMotor> motors;
@@ -268,6 +268,7 @@ public class DriveSystem {
 
         // determine turn power based on +/- error
         double error = computeDegreesDiff();
+        Log.d(TAG, "Error: " + error);
 
         // If it gets there: stop
         if (Math.abs(error) <= HEADING_THRESHOLD) {
@@ -277,18 +278,19 @@ public class DriveSystem {
         }
 
         // Go full speed until 60% there
-        leftSpeed = Math.abs(error) > FULL_POWER_UNTIL ? speed : (speed * getSteer(error));
-        // leftSpeed = speed * getSteer(error);
+        leftSpeed = Math.abs(error) / 100.0;
 
-
+        Log.d(TAG, "Left Speed: " + leftSpeed);
         if (leftSpeed < 0) {
-            leftSpeed = Range.clip(leftSpeed, -1.0, - 1 * MIN_SPEED);
+            leftSpeed = Range.clip(leftSpeed, -1.0, -1.0 * MIN_SPEED);
         } else {
             leftSpeed = Range.clip(leftSpeed, MIN_SPEED, 1.0);
         }
-        // Send desired speeds to motors.
-        tankDrive(leftSpeed, -leftSpeed);
 
+        // Send desired speeds to motors.
+        tankDrive(leftSpeed * Math.signum(error), -leftSpeed * Math.signum(error));
+        Log.d(TAG, "Left Speed Post Tank Drive " + leftSpeed);
+        Log.d(TAG, "Left Power" + motors.get(MotorNames.FRONTLEFT).getPower());
         return false;
     }
 
@@ -310,6 +312,7 @@ public class DriveSystem {
         while (robotDiff <= -180) {
             robotDiff += 360;
         }
+        Log.d(TAG,"Difference from initial 2: " + robotDiff);
         return robotDiff;
     }
 

@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 
 /*
     This class controls everything related to the arm, including driver assist features.
-
     IMPORTANT: When working on this class (and arm stuff in general),
     keep the servo names consistent: (from closest to the block to farthest)
         - Gripper
@@ -96,16 +95,12 @@ public class ArmSystem {
 
     /*
      If the robot is at the bottom of the screen, and X is the block:
-
      XO
      XO  <--- Position west
-
      OO
      XX  <--- Position south
-
      OX
      OX  <--- Position east
-
      XX
      OO  <--- Position north
      */
