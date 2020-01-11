@@ -29,7 +29,7 @@ public class ArmSystem {
         POSITION_SOUTH(new double[] {0.16, 0.22, 0.37}),
         POSITION_EAST(new double[] {0.16, 0.58, 0.37}),
         POSITION_NORTH(new double[] {0.16, 0.58, 0.05}),
-        POSITION_CAPSTONE(new double[] {0.56, 0.23, 0.82}, 0.5);
+        POSITION_CAPSTONE(new double[] {0.53, 0.21, 0.80}, 0.5);
 
         private double[] posArr;
         private double height;
@@ -66,8 +66,12 @@ public class ArmSystem {
         STATE_HOME,
         STATE_INITIAL,
     }
+    public enum ArmDirection {
+        UP, DOWN, IDLE
+    }
 
     private ArmState mCurrentState;
+    private ArmDirection mDirection;
 
     // Don't change this unless in calibrate() or init(), is read in the calculateHeight method
     private int mCalibrationDistance;
@@ -83,7 +87,7 @@ public class ArmSystem {
     private Deadline mWaiting;
 
     private final int MAX_HEIGHT = 6;
-    private final int INCREMENT_HEIGHT = 535; // how much the ticks increase when a block is added
+    private final int INCREMENT_HEIGHT = 525; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
     private final int WAIT_TIME = 450;
@@ -110,6 +114,7 @@ public class ArmSystem {
         this.slider = slider;
         this.mCalibrationDistance = slider.getCurrentPosition();
         this.slider.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        this.slider.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         mWaiting = new Deadline(WAIT_TIME, TimeUnit.MILLISECONDS);
         mTargetHeight = 0;
         setSliderHeight(mTargetHeight);
@@ -124,7 +129,7 @@ public class ArmSystem {
     }
 
     // Go to "north" position
-    public void moveNorth () {
+    public void moveNorth() {
         movePresetPosition(Position.POSITION_NORTH);
     }
 
@@ -188,18 +193,18 @@ public class ArmSystem {
                     mCurrentState = ArmState.STATE_ADJUST_ORIENTATION;
                 }
                 break;
+            case STATE_ADJUST_ORIENTATION:
+                if(mWaiting.hasExpired()) {
+                    setSliderHeight(mQueuePos);
+                    mCurrentState = ArmState.STATE_RAISE;
+                }
+                break;
             case STATE_RAISE:
                 if (runSliderToTarget()) {
                     Log.d(TAG, "Run");
                     incrementQueue();
                     mCurrentState = ArmState.STATE_CHECK_CLEARANCE;
                     return true;
-                }
-                break;
-            case STATE_ADJUST_ORIENTATION:
-                if(mWaiting.hasExpired()) {
-                    setSliderHeight(mQueuePos);
-                    mCurrentState = ArmState.STATE_RAISE;
                 }
                 break;
         }
@@ -251,7 +256,15 @@ public class ArmSystem {
     public void setSliderHeight(double pos) {
         mTargetHeight = Range.clip(pos, 0, MAX_HEIGHT);
         setPosTarget();
-        slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        if (slider.getCurrentPosition() == calculateHeight(mTargetHeight)) {
+            mDirection = ArmDirection.IDLE;
+            return;
+        } else if (slider.getCurrentPosition() > calculateHeight(mTargetHeight)) {
+            mDirection = ArmDirection.DOWN;
+        } else {
+            mDirection = ArmDirection.UP;
+        }
+        slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     public void setSliderHeight(int pos) {
@@ -261,13 +274,32 @@ public class ArmSystem {
 
     // Little helper method for setSliderHeight
     private int calculateHeight(double pos){
-        return (int) (pos == 0 ? mCalibrationDistance - 20 : mCalibrationDistance + (pos * INCREMENT_HEIGHT));
+        return (int) (pos == 0 ? mCalibrationDistance : mCalibrationDistance + (pos * INCREMENT_HEIGHT));
+    }
+
+    private double reverseCalcHeight(double pos) {
+        return  Math.round(pos/INCREMENT_HEIGHT);
     }
 
     // Must be called every loop
     public boolean runSliderToTarget() {
-        slider.setPower(1.0);
-        return areRoughlyEqual(slider.getCurrentPosition(), slider.getTargetPosition());
+        if (mDirection == ArmDirection.IDLE) {
+            return true;
+        } else {
+            slider.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+
+        if (mDirection == ArmDirection.UP && slider.getCurrentPosition() <  slider.getTargetPosition()){
+            slider.setPower(1.0);
+        } else if (mDirection == ArmDirection.DOWN && slider.getCurrentPosition() > slider.getTargetPosition()) {
+            slider.setPower(-1.0);
+        } else {
+            mDirection = ArmDirection.IDLE;
+            slider.setTargetPosition(slider.getCurrentPosition());
+            slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            return true;
+        }
+        return false;
     }
 
     public int getSliderPos() {
@@ -331,7 +363,5 @@ public class ArmSystem {
     private boolean areRoughlyEqual(int a, int b) {
         return Math.abs(Math.abs(a) - Math.abs(b)) < 15;
     }
-
-    
 
 }
