@@ -110,7 +110,6 @@ public class DriveTeleop extends BaseOpMode {
             up = false;
         }
 
-
         if (gamepad2.left_bumper && !down) {
             armSystem.setSliderHeight(armSystem.mTargetHeight - 1);
             down = true;
