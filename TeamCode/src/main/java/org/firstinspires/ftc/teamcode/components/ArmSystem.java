@@ -291,16 +291,15 @@ public class ArmSystem {
 
         if (mDirection == ArmDirection.UP && slider.getCurrentPosition() <  slider.getTargetPosition()){
             slider.setPower(1.0);
-            return false;
         } else if (mDirection == ArmDirection.DOWN && slider.getCurrentPosition() > slider.getTargetPosition()) {
             slider.setPower(-1.0);
-            return false;
         } else {
             mDirection = ArmDirection.IDLE;
             slider.setTargetPosition(slider.getCurrentPosition());
             slider.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             return true;
         }
+        return false;
     }
 
     public int getSliderPos() {
