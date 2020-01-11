@@ -165,8 +165,8 @@ public class DriveSystem {
                     case BACKRIGHT:
                         motor.setPower(correction < 0 ? 1 + sign * correction : 1);
                         break;
-                    }
-                });
+                }
+            });
         }
         // Motor has not reached target
         return false;
