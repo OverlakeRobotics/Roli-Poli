@@ -278,6 +278,9 @@ public class ArmSystem {
 
     // Must be called every loop
     public boolean runSliderToTarget() {
+        Log.d(TAG, "Direction:" + mDirection);
+        Log.d(TAG, "Curr Pos" + slider.getCurrentPosition());
+        Log.d(TAG, "Target Pos" + slider.getTargetPosition());
         if (mDirection == ArmDirection.IDLE) {
             return true;
         } else {
