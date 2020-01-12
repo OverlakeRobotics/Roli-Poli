@@ -88,7 +88,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
                             double radians = recognition.estimateAngleToObject(AngleUnit.RADIANS);
                             radians = currentTeam == Team.BLUE ? -radians : radians;
                             Log.d(TAG, "Radians: " + radians);
-                            int currOffset = (int) ((currentTeam == Team.RED ? 290 : 290) * (Math.tan(radians)));
+                            int currOffset = (int) ((currentTeam == Team.RED ? 340 : 340) * (Math.tan(radians)));
                             currOffset -= currentTeam == Team.RED ? 195 : 195;
                             Log.d(TAG, "Offset: " + currOffset);
                             // The skystone detected is one of the first three which means that
@@ -231,7 +231,7 @@ public abstract class BaseStateMachine extends BaseAutonomous {
 
             case MOVE_BACKWARDS_AFTER_FOUNDATION:
                 armSystem.runSliderToTarget();
-                if (driveSystem.driveToPosition(430, DriveSystem.Direction.BACKWARD, 1.0)) {
+                if (driveSystem.driveToPosition(395, DriveSystem.Direction.BACKWARD, 1.0)) {
                     newState(State.STRAFE_ONTO_LINE);
                 }
                 break;

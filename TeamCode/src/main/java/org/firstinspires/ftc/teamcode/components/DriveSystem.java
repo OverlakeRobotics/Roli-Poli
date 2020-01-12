@@ -55,6 +55,12 @@ public class DriveSystem {
         imuSystem = new IMUSystem(imu);
     }
 
+    public DriveSystem(EnumMap<MotorNames, DcMotor> motors) {
+        this.motors = motors;
+        mTargetTicks = 0;
+        initMotors();
+    }
+
     /**
      * Set the power of the drive system
      * @param power power of the system

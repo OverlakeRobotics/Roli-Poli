@@ -50,6 +50,16 @@ public class IntakeSystem {
         bottomServo.setPosition(0.0);
     }
 
+    public void suck(double power) {
+        setMotorPowers(-power);
+        bottomServo.setPosition(1.0);
+    }
+
+    public void unsuck(double power) {
+        setMotorPowers(power);
+        bottomServo.setPosition(0.0);
+    }
+
     private void setMotorPowers(double power) {
         for (DcMotor motor : motors.values()) {
             motor.setPower(power);
