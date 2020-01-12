@@ -55,6 +55,12 @@ public class DriveSystem {
         imuSystem = new IMUSystem(imu);
     }
 
+    public DriveSystem(EnumMap<MotorNames, DcMotor> motors) {
+        this.motors = motors;
+        mTargetTicks = 0;
+        initMotors();
+    }
+
     /**
      * Set the power of the drive system
      * @param power power of the system
@@ -278,14 +284,10 @@ public class DriveSystem {
         }
 
         // Go full speed until 60% there
-        leftSpeed = Math.abs(error) / 100.0;
+        leftSpeed = Math.abs(error) / 125.0;
 
         Log.d(TAG, "Left Speed: " + leftSpeed);
-        if (leftSpeed < 0) {
-            leftSpeed = Range.clip(leftSpeed, -1.0, -1.0 * MIN_SPEED);
-        } else {
-            leftSpeed = Range.clip(leftSpeed, MIN_SPEED, 1.0);
-        }
+        leftSpeed = Range.clip(leftSpeed, MIN_SPEED, 1.0);
 
         // Send desired speeds to motors.
         tankDrive(leftSpeed * Math.signum(error), -leftSpeed * Math.signum(error));

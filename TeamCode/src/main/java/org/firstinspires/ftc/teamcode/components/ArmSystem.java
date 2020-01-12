@@ -89,7 +89,7 @@ public class ArmSystem {
     private final int INCREMENT_HEIGHT = 525; // how much the ticks increase when a block is added
     private final double GRIPPER_OPEN = 0.9;
     private final double GRIPPER_CLOSE = 0.3;
-    private final int WAIT_TIME = 450;
+    private final int WAIT_TIME = 400;
 
     public static final String TAG = "ArmSystem"; // for debugging
 
@@ -278,6 +278,9 @@ public class ArmSystem {
 
     // Must be called every loop
     public boolean runSliderToTarget() {
+        Log.d(TAG, "Direction:" + mDirection);
+        Log.d(TAG, "Curr Pos" + slider.getCurrentPosition());
+        Log.d(TAG, "Target Pos" + slider.getTargetPosition());
         if (mDirection == ArmDirection.IDLE) {
             return true;
         } else {
@@ -356,7 +359,7 @@ public class ArmSystem {
     }
 
     private boolean areRoughlyEqual(int a, int b) {
-        return Math.abs(Math.abs(a) - Math.abs(b)) < 15;
+        return Math.abs(Math.abs(a) - Math.abs(b)) < 10;
     }
 
 }

@@ -30,9 +30,9 @@ public class DriveTeleop extends BaseOpMode {
 
 
         if (gamepad1.left_bumper) {
-            intakeSystem.unsuck();
+            intakeSystem.unsuck(0.5);
         } else if (gamepad1.right_bumper) {
-            intakeSystem.suck();
+            intakeSystem.suck(0.5);
         } else {
             intakeSystem.stop();
         }
